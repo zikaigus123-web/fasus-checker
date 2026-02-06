@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Cek Budget Fasus</title>
+</head>
+
+<body>
+
+<h2>Cek Budget Fasus</h2>
+
+<input id="fasus" placeholder="Ketik nama fasus">
+<button onclick="check()">Check</button>
+
+<pre id="result"></pre>
+
+<script>
+
+async function check(){
+
+const fasus =
+document.getElementById("fasus").value;
+
+document.getElementById("result").innerText =
+"Loading...";
+
+const res =
+await fetch(
+"https://dummyacountsubhan1.app.n8n.cloud/webhook-test/check-budget",
+{
+method:"POST",  
+headers:{
+"Content-Type":"application/json"
+},
+body: JSON.stringify({
+fasusName: fasus
+})
+}
+);
+
+const data =
+await res.json();
+
+document.getElementById("result").innerText =
+data.message;
+
+}
+
+</script>
+
+</body>
+</html>
+ 
