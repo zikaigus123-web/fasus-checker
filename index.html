@@ -139,9 +139,16 @@ Check
 
 async function checkBudget(){
 
-const fasus = document.getElementById("fasusInput").value;
+const fasus = document.getElementById("fasusInput").value.trim();
+
+if(!fasus){
+document.getElementById("result").innerText = "Masukkan nama fasus terlebih dahulu";
+return;
+}
 
 document.getElementById("result").innerText = "Loading...";
+
+try{
 
 const response = await fetch("https://dummyacountsubhan1.app.n8n.cloud/webhook/check-budget",{
 method:"POST",
@@ -149,18 +156,37 @@ headers:{
 "Content-Type":"application/json"
 },
 body:JSON.stringify({
-fasus:fasus
+fasus: fasus
 })
 });
 
+if(!response.ok){
+throw new Error("Webhook tidak merespons");
+}
+
 const data = await response.json();
 
+if(data.summary){
 document.getElementById("result").innerText =
 data.summary + "\n\n" + data.details;
+}else if(data.message){
+document.getElementById("result").innerText = data.message;
+}else{
+document.getElementById("result").innerText =
+"Tidak ada data ditemukan";
+}
+
+}catch(error){
+
+document.getElementById("result").innerText =
+"Error: workflow belum aktif atau webhook salah";
+
+}
 
 }
 
 </script>
+
 
 </body>
 </html>
