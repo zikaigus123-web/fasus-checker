@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Hasil Fasus</title>
+
+<style>
+body{
+font-family:Arial;
+background:#111;
+color:white;
+padding:40px;
+}
+
+.container{
+max-width:800px;
+margin:auto;
+}
+
+.title{
+font-size:32px;
+margin-bottom:20px;
+}
+
+.result-box{
+background:#222;
+padding:20px;
+border-radius:8px;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="title">
+Hasil Pencarian Fasus
+</div>
+
+<div class="result-box" id="result">
+Loading...
+</div>
+
+</div>
+
+<script>
+
+const urlParams = new URLSearchParams(window.location.search);
+
+const fasus = urlParams.get("fasus");
+
+fetch(
+"https://dummyacountsubhan1.app.n8n.cloud/webhook/check-budget",
+{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+fasus: fasus
+})
+}
+)
+.then(res=>res.json())
+.then(data=>{
+
+if(data.summary){
+
+document.getElementById("result").innerText =
+data.summary + "\n\n" + data.details;
+
+}else{
+
+document.getElementById("result").innerText =
+"Tidak ditemukan";
+
+}
+
+});
+
+</script>
+
+</body>
+</html>
