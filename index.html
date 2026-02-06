@@ -22,7 +22,7 @@ align-items:center;
 color:white;
 }
 
-/* Background image */
+/* Background */
 .background{
 position:fixed;
 top:0;
@@ -64,19 +64,19 @@ width:180px;
 opacity:0.9;
 }
 
-/* Kontainer utama */
+/* Container */
 .container{
 text-align:center;
 }
 
-/* Judul */
+/* Title */
 .title{
 font-size:48px;
 font-weight:bold;
 margin-bottom:20px;
 }
 
-/* Search box */
+/* Search box wrapper */
 .search-box{
 position:relative;
 display:inline-block;
@@ -86,9 +86,25 @@ display:inline-block;
 input{
 padding:12px;
 font-size:18px;
-width:300px;
+width:350px;
 border:none;
-border-radius:5px;
+border-radius:6px;
+}
+
+/* Button */
+button{
+padding:12px 20px;
+font-size:18px;
+background:#FFD100;
+border:none;
+border-radius:6px;
+cursor:pointer;
+font-weight:bold;
+margin-left:10px;
+}
+
+button:hover{
+background:#e6bc00;
 }
 
 /* Suggestions dropdown */
@@ -107,36 +123,14 @@ text-align:left;
 z-index:999;
 }
 
+/* Suggestion item */
 .suggestion-item{
 padding:12px;
 cursor:pointer;
 }
 
 .suggestion-item:hover{
-background:#FFD100;
-}
-
-/* Button */
-button{
-padding:12px 20px;
-font-size:18px;
-background:#FFD100;
-border:none;
-border-radius:5px;
-cursor:pointer;
-font-weight:bold;
-margin-left:10px;
-}
-
-button:hover{
-background:#e6bc00;
-}
-
-/* Result */
-.result{
-margin-top:20px;
-font-size:18px;
-white-space:pre-line;
+background:#f1f1f1;
 }
 
 </style>
@@ -173,95 +167,45 @@ autocomplete="off"
 Check
 </button>
 
-<div class="result" id="result"></div>
-
 </div>
 
 <script>
 
-/* ========================= */
-/* CHECK BUDGET FUNCTION */
-/* ========================= */
+/* Redirect ke halaman result */
+function checkBudget(){
 
-async function checkBudget(){
+const fasus =
+document.getElementById("fasusInput").value.trim();
 
-const fasus = document.getElementById("fasusInput").value.trim();
+if(!fasus) return;
 
-if(!fasus){
-document.getElementById("result").innerText =
-"Masukkan nama fasus terlebih dahulu";
-return;
-}
-
-document.getElementById("result").innerText = "Loading...";
-
-try{
-
-const response = await fetch(
-"https://dummyacountsubhan1.app.n8n.cloud/webhook/check-budget",
-{
-method:"POST",
-headers:{
-"Content-Type":"application/json"
-},
-body:JSON.stringify({
-fasus: fasus
-})
-});
-
-if(!response.ok){
-throw new Error("Webhook error");
-}
-
-const data = await response.json();
-
-if(data.summary){
-
-document.getElementById("result").innerText =
-data.summary + "\n\n" + data.details;
-
-}else if(data.message){
-
-document.getElementById("result").innerText =
-data.message;
-
-}else{
-
-document.getElementById("result").innerText =
-"Tidak ada data ditemukan";
-
-}
-
-}catch(error){
-
-document.getElementById("result").innerText =
-"Error: workflow belum aktif atau webhook salah";
-
-}
+window.location.href =
+"result.html?fasus=" +
+encodeURIComponent(fasus);
 
 }
 
 
-/* ========================= */
-/* SUGGESTION FUNCTION */
-/* ========================= */
-
+/* Show suggestions */
 async function showSuggestions(){
 
 const query =
 document.getElementById("fasusInput").value.trim();
 
+const box =
+document.getElementById("suggestions");
+
 if(query.length < 2){
 
-document.getElementById("suggestions").innerHTML = "";
-
+box.innerHTML = "";
 return;
 
 }
 
 try{
 
-const response = await fetch(
+const response =
+await fetch(
 "https://dummyacountsubhan1.app.n8n.cloud/webhook/fasus-suggest",
 {
 method:"POST",
@@ -271,70 +215,44 @@ headers:{
 body:JSON.stringify({
 query: query
 })
-});
-
-if(!response.ok){
-return;
 }
+);
 
 const data = await response.json();
 
-if(!data.suggestions){
-return;
-}
+box.innerHTML = "";
 
-let html = "";
+if(!data.suggestions) return;
 
 data.suggestions.forEach(item=>{
 
-html += `
-<div class="suggestion-item"
-onclick="selectSuggestion('${item}')">
-${item}
-</div>
-`;
+const div =
+document.createElement("div");
+
+div.className =
+"suggestion-item";
+
+div.innerText = item;
+
+div.onclick = ()=>{
+
+window.location.href =
+"result.html?fasus=" +
+encodeURIComponent(item);
+
+};
+
+box.appendChild(div);
 
 });
 
-document.getElementById("suggestions").innerHTML = html;
+}catch(e){
 
-}catch(error){
-
-console.log("Suggestion error");
+box.innerHTML = "";
 
 }
 
 }
-
-
-/* ========================= */
-/* SELECT SUGGESTION */
-/* ========================= */
-
-function selectSuggestion(text){
-
-document.getElementById("fasusInput").value = text;
-
-document.getElementById("suggestions").innerHTML = "";
-
-checkBudget();
-
-}
-
-
-/* ========================= */
-/* CLOSE SUGGESTION WHEN CLICK OUTSIDE */
-/* ========================= */
-
-document.addEventListener("click", function(e){
-
-if(!e.target.closest(".search-box")){
-
-document.getElementById("suggestions").innerHTML = "";
-
-}
-
-});
 
 </script>
 
