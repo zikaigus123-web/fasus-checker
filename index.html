@@ -1,47 +1,162 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cek Budget Fasus</title>
-</head>
 
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial, sans-serif;
+}
+
+body{
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+color:white;
+}
+
+/* Background image dengan efek gelap */
+.background{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background-image:url('background.jpg');
+background-size:cover;
+background-position:center;
+z-index:-2;
+}
+
+/* Overlay gelap */
+.overlay{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.65);
+z-index:-1;
+}
+
+/* Logo kanan atas */
+.logo-top{
+position:fixed;
+top:20px;
+right:30px;
+width:120px;
+}
+
+/* Logo tengah bawah */
+.logo-bottom{
+position:fixed;
+bottom:25px;
+left:50%;
+transform:translateX(-50%);
+width:180px;
+opacity:0.9;
+}
+
+/* Kontainer utama */
+.container{
+text-align:center;
+}
+
+/* Judul */
+.title{
+font-size:48px;
+font-weight:bold;
+margin-bottom:20px;
+}
+
+/* Input */
+input{
+padding:12px;
+font-size:18px;
+width:300px;
+border:none;
+border-radius:5px;
+margin-right:10px;
+}
+
+/* Button */
+button{
+padding:12px 20px;
+font-size:18px;
+background:#FFD100;
+border:none;
+border-radius:5px;
+cursor:pointer;
+font-weight:bold;
+}
+
+button:hover{
+background:#e6bc00;
+}
+
+/* Result */
+.result{
+margin-top:20px;
+font-size:18px;
+white-space:pre-line;
+}
+
+</style>
+
+</head>
 <body>
 
-<h2>Cek Budget Fasus</h2>
+<div class="background"></div>
+<div class="overlay"></div>
 
-<input id="fasus" placeholder="Ketik nama fasus">
-<button onclick="check()">Check</button>
+<img src="logo-ut.png" class="logo-top">
+<img src="logo-insan.png" class="logo-bottom">
 
-<pre id="result"></pre>
+<div class="container">
+
+<div class="title">
+CEK BUDGET FASUS
+</div>
+
+<input id="fasusInput" placeholder="Masukkan nama fasus">
+
+<button onclick="checkBudget()">
+Check
+</button>
+
+<div class="result" id="result"></div>
+
+</div>
 
 <script>
 
-async function check(){
+async function checkBudget(){
 
-const fasus =
-document.getElementById("fasus").value;
+const fasus = document.getElementById("fasusInput").value;
 
-document.getElementById("result").innerText =
-"Loading...";
+document.getElementById("result").innerText = "Loading...";
 
-const res =
-await fetch(
-"https://dummyacountsubhan1.app.n8n.cloud/webhook-test/check-budget",
-{
-method:"POST",  
+const response = await fetch("WEBHOOK_URL_KAMU",{
+method:"POST",
 headers:{
 "Content-Type":"application/json"
 },
-body: JSON.stringify({
-fasusName: fasus
+body:JSON.stringify({
+fasus:fasus
 })
-}
-);
+});
 
-const data =
-await res.json();
+const data = await response.json();
 
 document.getElementById("result").innerText =
-data.message;
+data.summary + "\n\n" + data.details;
 
 }
 
@@ -49,4 +164,3 @@ data.message;
 
 </body>
 </html>
- 
