@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -42,13 +44,11 @@ transform:translateX(-50%);
 }
 
 .header-right{
-z-index:1;
-font-size:18px;
+font-size:16px;
 }
 
-.logo-ut{
+.logo{
 height:50px;
-object-fit:contain;
 }
 
 /* BACK BUTTON */
@@ -125,17 +125,14 @@ animation:spin 1s linear infinite;
 }
 
 </style>
+
 </head>
 
 <body>
 
-<!-- SPINNER -->
-
 <div id="spinner" class="spinner">
 <div class="loader"></div>
 </div>
-
-<!-- HEADER -->
 
 <div class="header">
 
@@ -144,23 +141,19 @@ Dashboard
 </div>
 
 <div class="header-center">
-<img src="ut-school-logo.png" class="logo-ut">
+<img src="ut-school-logo.png" class="logo">
 </div>
 
-<div class="header-right" id="lastUpdated">
-Last updated:
+<div class="header-right" id="updated">
+Last updated
 </div>
 
 </div>
-
-<!-- BACK BUTTON -->
 
 <button class="back"
 onclick="window.location.href='index.html'">
 ← Back
 </button>
-
-<!-- CONTENT -->
 
 <div class="container" id="content" style="display:none;">
 
@@ -202,8 +195,8 @@ onclick="window.location.href='index.html'">
 <th>PJB</th>
 <th>Serial</th>
 <th>Expired</th>
-<th>Sisa</th>
 <th>Status</th>
+<th>Amount</th>
 </tr>
 </thead>
 
@@ -217,13 +210,14 @@ onclick="window.location.href='index.html'">
 
 <script>
 
-/* FORMAT RUPIAH */
+const SHEET_URL =
+"https://docs.google.com/spreadsheets/d/e/2PACX-1vTbJYRkPPTPDYHrDTy-eA_e5rUZ_VowdvBDjHU0BD7rKTvHIZfZAQf_ctl8qDkpiGYVnr9qARdX4fZ6/gviz/tq?tqx=out:json&gid=969077332";
 
-function formatRupiah(num){
-return "Rp " + Number(num).toLocaleString("id-ID");
+function rupiah(n){
+
+return "Rp " + Number(n).toLocaleString("id-ID");
+
 }
-
-/* GET PARAM */
 
 const params =
 new URLSearchParams(window.location.search);
@@ -234,44 +228,77 @@ params.get("fasus");
 document.getElementById("title").innerText =
 fasus + " Dashboard";
 
-/* FETCH DATA */
+fetch(SHEET_URL)
 
-fetch(
-"https://dummyacountsubhan1.app.n8n.cloud/webhook/check-budget",
-{
-method:"POST",
-headers:{
-"Content-Type":"application/json"
-},
-body:JSON.stringify({fasus})
-}
-)
-.then(res=>res.json())
-.then(data=>{
+.then(res=>res.text())
 
-/* HIDE SPINNER */
+.then(text=>{
 
-document.getElementById("spinner").style.display="none";
-document.getElementById("content").style.display="block";
+const json =
+JSON.parse(text.substring(47).slice(0,-2));
 
-/* LAST UPDATED */
+const rows =
+json.table.rows;
 
-document.getElementById("lastUpdated").innerText =
-"Last updated: " +
-new Date(data.last_updated).toLocaleString();
+const data =
+rows.map(r=>({
 
-/* SUMMARY */
+fasus: r.c[0]?.v || "",
+
+amount: Number(r.c[1]?.v || 0),
+
+status: r.c[2]?.v || "",
+
+pjb: r.c[3]?.v || "",
+
+serial: r.c[4]?.v || "",
+
+expired: r.c[5]?.v || ""
+
+}));
+
+const filtered =
+data.filter(d =>
+d.fasus.toLowerCase() === fasus.toLowerCase()
+);
+
+let total=0;
+let used=0;
+
+filtered.forEach(d=>{
+
+total += d.amount;
+
+if(d.status==="DONE")
+used += d.amount;
+
+document.getElementById("table").innerHTML +=
+
+`<tr>
+<td>${d.pjb}</td>
+<td>${d.serial}</td>
+<td>${d.expired}</td>
+<td>${d.status}</td>
+<td>${rupiah(d.amount)}</td>
+</tr>`;
+
+});
+
+const remaining =
+total - used;
 
 document.getElementById("total").innerText =
-formatRupiah(data.summary.total_budget);
+rupiah(total);
 
 document.getElementById("used").innerText =
-formatRupiah(data.summary.total_used);
+rupiah(used);
 
 document.getElementById("remaining").innerText =
-formatRupiah(data.summary.total_remaining);
+rupiah(remaining);
 
-/* PIE CHART */
+document.getElementById("updated").innerText =
+"Last updated: " +
+new Date().toLocaleString();
 
 new Chart(document.getElementById("pie"),{
 
@@ -280,43 +307,24 @@ type:"pie",
 data:{
 labels:["Terpakai","Tersisa"],
 datasets:[{
-data:[
-data.summary.total_used,
-data.summary.total_remaining
-],
-backgroundColor:[
-"#ff3b3b",
-"#00c853"
-]
+data:[used,remaining],
+backgroundColor:["#ff3b3b","#00c853"]
 }]
 }
 
 });
 
-/* TABLE + BAR DATA */
+let doneCount=0;
+let notYetCount=0;
 
-let done=0;
-let notyet=0;
-
-data.details.forEach(d=>{
+filtered.forEach(d=>{
 
 if(d.status==="DONE")
-done++;
+doneCount++;
 else
-notyet++;
-
-document.getElementById("table").innerHTML+=
-`<tr>
-<td>${d.pjb}</td>
-<td>${d.serial}</td>
-<td>${d.expired}</td>
-<td>${formatRupiah(d.sisa)}</td>
-<td>${d.status}</td>
-</tr>`;
+notYetCount++;
 
 });
-
-/* BAR CHART */
 
 new Chart(document.getElementById("bar"),{
 
@@ -325,28 +333,23 @@ type:"bar",
 data:{
 labels:["DONE","NOT YET"],
 datasets:[{
-label:"Jumlah Status",
-data:[done,notyet],
-backgroundColor:[
-"#00c853",
-"#FFD100"
-]
+data:[doneCount,notYetCount],
+backgroundColor:["#00c853","#FFD100"]
 }]
-},
-
-options:{
-plugins:{
-legend:{display:false}
-}
 }
 
 });
 
+document.getElementById("spinner").style.display="none";
+
+document.getElementById("content").style.display="block";
+
 })
 
 .catch(err=>{
-console.log(err);
-alert("Gagal mengambil data dari server");
+
+alert("Gagal mengambil data dari spreadsheet");
+
 });
 
 </script>
