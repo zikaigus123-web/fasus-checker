@@ -21,8 +21,6 @@ color:white;
 overflow:hidden;
 }
 
-/* BACKGROUND */
-
 .background{
 position:fixed;
 width:100%;
@@ -39,33 +37,20 @@ background:rgba(0,0,0,0.65);
 z-index:-1;
 }
 
-/* LOGO */
-
-.logo-top{
-position:fixed;
-top:20px;
-right:30px;
-height:60px;
-}
-
-.logo-bottom{
-position:fixed;
-bottom:25px;
-left:50%;
-transform:translateX(-50%);
-height:70px;
-}
-
-/* SEARCH BOX */
-
 .container{
 text-align:center;
+position:relative;
 }
 
 .title{
 font-size:48px;
 font-weight:bold;
 margin-bottom:25px;
+}
+
+.search-box{
+position:relative;
+display:inline-block;
 }
 
 input{
@@ -91,7 +76,28 @@ button:hover{
 background:#e6bc00;
 }
 
-/* SPINNER */
+.suggest{
+position:absolute;
+top:50px;
+width:320px;
+background:white;
+color:black;
+border-radius:6px;
+max-height:200px;
+overflow-y:auto;
+display:none;
+z-index:5;
+text-align:left;
+}
+
+.suggest div{
+padding:10px;
+cursor:pointer;
+}
+
+.suggest div:hover{
+background:#FFD100;
+}
 
 .spinner{
 display:none;
@@ -122,22 +128,27 @@ margin:auto;
 <div class="background"></div>
 <div class="overlay"></div>
 
-<img src="logo-ut.png" class="logo-top">
-<img src="logo-insan.png" class="logo-bottom">
-
 <div class="container">
 
 <div class="title">
 CEK BUDGET FASUS
 </div>
 
+<div class="search-box">
+
 <input
 id="fasusInput"
 placeholder="Masukkan nama fasus"
-onkeypress="if(event.key==='Enter') openDashboard()"
+oninput="showSuggest()"
+onkeypress="if(event.key==='Enter') openDashboard(this.value)"
+autocomplete="off"
 >
 
-<button onclick="openDashboard()">
+<div id="suggestBox" class="suggest"></div>
+
+</div>
+
+<button onclick="openDashboard(document.getElementById('fasusInput').value)">
 Check
 </button>
 
@@ -149,28 +160,92 @@ Check
 
 <script>
 
-function openDashboard(){
+/* GANTI DENGAN ID GOOGLE SHEETS ANDA */
+const sheetID =
+"2PACX-1vTbJYRkPPTPDYHrDTy-eA_e5rUZ_VowdvBDjHU0BD7rKTvHIZfZAQf_ctl8qDkpiGYVnr9qARdX4fZ6";
 
-const fasus =
-document.getElementById("fasusInput").value.trim();
+const url =
+"https://docs.google.com/spreadsheets/d/e/" +
+sheetID +
+"/pub?output=csv";
+
+let fasusList = [];
+
+fetch(url)
+.then(res=>res.text())
+.then(text=>{
+
+const rows =
+text.split("\n");
+
+for(let i=1;i<rows.length;i++){
+
+const cols =
+rows[i].split(",");
+
+if(cols[0])
+fasusList.push(cols[0].trim());
+
+}
+
+});
+
+function showSuggest(){
+
+const input =
+document.getElementById("fasusInput").value.toLowerCase();
+
+const box =
+document.getElementById("suggestBox");
+
+box.innerHTML="";
+
+if(!input){
+
+box.style.display="none";
+return;
+
+}
+
+const filtered =
+fasusList.filter(f =>
+f.toLowerCase().includes(input)
+);
+
+filtered.forEach(f=>{
+
+const div =
+document.createElement("div");
+
+div.innerText=f;
+
+div.onclick=()=>{
+openDashboard(f);
+};
+
+box.appendChild(div);
+
+});
+
+box.style.display=
+filtered.length ? "block":"none";
+
+}
+
+function openDashboard(fasus){
 
 if(!fasus){
 
 alert("Masukkan nama fasus");
-
 return;
 
 }
 
 document.getElementById("spinner").style.display="block";
 
-setTimeout(()=>{
-
 window.location.href =
 "fasus-dashboard.html?fasus=" +
 encodeURIComponent(fasus);
-
-},600);
 
 }
 
