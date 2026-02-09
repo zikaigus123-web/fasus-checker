@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Cek Budget Fasus</title>
 
 <style>
@@ -10,27 +11,24 @@
 body{
 margin:0;
 font-family:Arial;
-color:white;
+background:url('background.jpg') center/cover no-repeat;
+height:100vh;
 display:flex;
 justify-content:center;
 align-items:center;
-height:100vh;
-background:url('background.jpg') center/cover no-repeat;
+color:white;
 }
 
 .overlay{
 position:fixed;
-top:0;
-left:0;
 width:100%;
 height:100%;
-background:rgba(0,0,0,0.65);
-z-index:0;
+background:rgba(0,0,0,0.7);
 }
 
 .container{
 position:relative;
-z-index:1;
+z-index:2;
 text-align:center;
 }
 
@@ -40,28 +38,23 @@ font-weight:bold;
 margin-bottom:20px;
 }
 
-.search-box{
-position:relative;
-display:inline-block;
-}
-
 input{
-width:400px;
-padding:14px;
+width:420px;
+padding:15px;
 font-size:18px;
-border-radius:6px;
+border-radius:8px;
 border:none;
 outline:none;
 }
 
 button{
 margin-top:15px;
-padding:12px 30px;
+padding:12px 35px;
 font-size:18px;
 font-weight:bold;
 background:#FFD100;
 border:none;
-border-radius:6px;
+border-radius:8px;
 cursor:pointer;
 }
 
@@ -70,16 +63,13 @@ background:#e6bc00;
 }
 
 .suggestions{
-position:absolute;
-width:100%;
 background:white;
 color:black;
-border-radius:6px;
 margin-top:5px;
-overflow:hidden;
-display:none;
+border-radius:8px;
 max-height:250px;
 overflow-y:auto;
+display:none;
 }
 
 .item{
@@ -94,23 +84,16 @@ background:#eee;
 .logo-top{
 position:fixed;
 top:20px;
-right:30px;
-width:120px;
-z-index:2;
+right:20px;
+width:130px;
 }
 
 .logo-bottom{
 position:fixed;
-bottom:25px;
+bottom:20px;
 left:50%;
 transform:translateX(-50%);
 width:180px;
-z-index:2;
-}
-
-.spinner{
-margin-top:10px;
-display:none;
 }
 
 </style>
@@ -127,24 +110,15 @@ display:none;
 
 <div class="title">CEK BUDGET FASUS</div>
 
-<div class="search-box">
-
-<input
-id="input"
+<input id="input"
 placeholder="Masukkan nama fasus"
-oninput="suggest()"
-autocomplete="off"
->
+oninput="suggest()">
 
 <div id="suggestions" class="suggestions"></div>
-
-</div>
 
 <br>
 
 <button onclick="goDashboard()">Check</button>
-
-<div class="spinner" id="spinner">Loading...</div>
 
 </div>
 
@@ -156,12 +130,12 @@ const SUGGEST_URL =
 function goDashboard(){
 
 const fasus =
-document.getElementById("input").value.trim();
+document.getElementById("input").value;
 
 if(!fasus) return;
 
 window.location.href =
-"fasus-dashboard.html?fasus=" +
+"fasus-dashboard.html?fasus="+
 encodeURIComponent(fasus);
 
 }
@@ -174,41 +148,38 @@ document.getElementById("input").value;
 const box =
 document.getElementById("suggestions");
 
-if(query.length < 1){
+if(query.length<1){
 box.style.display="none";
 return;
 }
 
-try{
-
-const res = await fetch(SUGGEST_URL,{
+const res =
+await fetch(SUGGEST_URL,{
 method:"POST",
 headers:{
 "Content-Type":"application/json"
 },
-body:JSON.stringify({
-query:query
-})
+body:JSON.stringify({query})
 });
 
-const data = await res.json();
+const data =
+await res.json();
 
 box.innerHTML="";
 
-if(data.suggestions && data.suggestions.length>0){
+if(data.suggestions){
 
 data.suggestions.forEach(name=>{
 
-const div =
-document.createElement("div");
+const div=document.createElement("div");
 
 div.className="item";
 
 div.innerText=name;
 
 div.onclick=()=>{
-window.location.href =
-"fasus-dashboard.html?fasus=" +
+window.location.href=
+"fasus-dashboard.html?fasus="+
 encodeURIComponent(name);
 };
 
@@ -218,12 +189,6 @@ box.appendChild(div);
 
 box.style.display="block";
 
-}else{
-box.style.display="none";
-}
-
-}catch{
-box.style.display="none";
 }
 
 }
