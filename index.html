@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
-
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -13,81 +11,75 @@
 body{
 margin:0;
 font-family:Arial;
-height:100vh;
-display:flex;
-justify-content:center;
-align-items:center;
+background:#000;
 color:white;
-overflow:hidden;
-}
-
-.background{
-position:fixed;
-width:100%;
-height:100%;
-background:url("background.jpg") center/cover no-repeat;
-z-index:-2;
+background-image:url("background.jpg");
+background-size:cover;
+background-position:center;
 }
 
 .overlay{
-position:fixed;
-width:100%;
-height:100%;
 background:rgba(0,0,0,0.65);
-z-index:-1;
+width:100%;
+height:100vh;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
 }
 
-.container{
-text-align:center;
-position:relative;
+.logo{
+position:absolute;
+top:30px;
+}
+
+.logo img{
+height:70px;
 }
 
 .title{
 font-size:48px;
 font-weight:bold;
-margin-bottom:25px;
+margin-bottom:30px;
 }
 
-.search-box{
-position:relative;
-display:inline-block;
+.searchBox{
+display:flex;
+gap:10px;
 }
 
 input{
-padding:14px;
+width:400px;
+padding:15px;
 font-size:18px;
-width:320px;
+border-radius:8px;
 border:none;
-border-radius:6px;
+outline:none;
 }
 
 button{
-padding:14px 24px;
+padding:15px 25px;
 font-size:18px;
 background:#FFD100;
 border:none;
-border-radius:6px;
+border-radius:8px;
 cursor:pointer;
 font-weight:bold;
-margin-left:10px;
 }
 
 button:hover{
-background:#e6bc00;
+background:#ffcc00;
 }
 
 .suggest{
 position:absolute;
-top:50px;
-width:320px;
 background:white;
 color:black;
-border-radius:6px;
-max-height:200px;
-overflow-y:auto;
-display:none;
-z-index:5;
-text-align:left;
+width:400px;
+margin-top:5px;
+border-radius:8px;
+overflow:hidden;
+z-index:999;
 }
 
 .suggest div{
@@ -96,27 +88,7 @@ cursor:pointer;
 }
 
 .suggest div:hover{
-background:#FFD100;
-}
-
-.spinner{
-display:none;
-margin-top:20px;
-}
-
-.loader{
-border:6px solid #333;
-border-top:6px solid #FFD100;
-border-radius:50%;
-width:40px;
-height:40px;
-animation:spin 1s linear infinite;
-margin:auto;
-}
-
-@keyframes spin{
-0%{transform:rotate(0deg);}
-100%{transform:rotate(360deg);}
+background:#eee;
 }
 
 </style>
@@ -125,129 +97,125 @@ margin:auto;
 
 <body>
 
-<div class="background"></div>
-<div class="overlay"></div>
+<div class="overlay">
 
-<div class="container">
+<div class="logo">
+<img src="logo-ut-school.png">
+</div>
 
 <div class="title">
 CEK BUDGET FASUS
 </div>
 
-<div class="search-box">
-
-<input
-id="fasusInput"
-placeholder="Masukkan nama fasus"
-oninput="showSuggest()"
-onkeypress="if(event.key==='Enter') openDashboard(this.value)"
-autocomplete="off"
->
-
-<div id="suggestBox" class="suggest"></div>
-
+<div class="searchBox">
+<div>
+<input id="input" placeholder="Ketik nama perusahaan..." autocomplete="off">
+<div id="suggest" class="suggest"></div>
 </div>
 
-<button onclick="openDashboard(document.getElementById('fasusInput').value)">
+<button onclick="checkFasus()">
 Check
 </button>
-
-<div class="spinner" id="spinner">
-<div class="loader"></div>
 </div>
 
 </div>
 
 <script>
 
-/* GANTI DENGAN ID GOOGLE SHEETS ANDA */
-const sheetID =
-"2PACX-1vTbJYRkPPTPDYHrDTy-eA_e5rUZ_VowdvBDjHU0BD7rKTvHIZfZAQf_ctl8qDkpiGYVnr9qARdX4fZ6";
-
-const url =
-"https://docs.google.com/spreadsheets/d/e/" +
-sheetID +
-"/pub?output=csv";
+const sheetURL =
+"https://docs.google.com/spreadsheets/d/e/2PACX-1vTbJYRkPPTPDYHrDTy-eA_e5rUZ_VowdvBDjHU0BD7rKTvHIZfZAQf_ctl8qDkpiGYVnr9qARdX4fZ6/pub?output=csv";
 
 let fasusList = [];
 
-fetch(url)
+fetch(sheetURL)
 .then(res=>res.text())
 .then(text=>{
 
-const rows =
-text.split("\n");
+const rows = text.split("\n");
 
 for(let i=1;i<rows.length;i++){
 
-const cols =
-rows[i].split(",");
+const cols = rows[i].split(",");
 
-if(cols[0])
-fasusList.push(cols[0].trim());
+if(cols[0]){
+const name = cols[0].trim();
+
+if(name!=="" && !fasusList.includes(name)){
+fasusList.push(name);
+}
 
 }
 
+}
+
+console.log("Loaded Fasus:", fasusList);
+
+})
+.catch(err=>{
+console.error("Failed load spreadsheet", err);
 });
 
-function showSuggest(){
-
 const input =
-document.getElementById("fasusInput").value.toLowerCase();
+document.getElementById("input");
 
-const box =
-document.getElementById("suggestBox");
+const suggest =
+document.getElementById("suggest");
 
-box.innerHTML="";
+input.addEventListener("input", function(){
 
-if(!input){
+const value =
+this.value.toLowerCase();
 
-box.style.display="none";
-return;
+suggest.innerHTML="";
 
-}
+if(value==="") return;
 
 const filtered =
 fasusList.filter(f =>
-f.toLowerCase().includes(input)
+f.toLowerCase().includes(value)
 );
 
-filtered.forEach(f=>{
+filtered.slice(0,5).forEach(f=>{
 
 const div =
 document.createElement("div");
 
 div.innerText=f;
 
-div.onclick=()=>{
-openDashboard(f);
+div.onclick=function(){
+input.value=f;
+suggest.innerHTML="";
 };
 
-box.appendChild(div);
+suggest.appendChild(div);
 
 });
 
-box.style.display=
-filtered.length ? "block":"none";
+});
 
-}
+function checkFasus(){
 
-function openDashboard(fasus){
+const fasus =
+input.value.trim();
 
-if(!fasus){
-
+if(fasus===""){
 alert("Masukkan nama fasus");
 return;
-
 }
 
-document.getElementById("spinner").style.display="block";
-
 window.location.href =
-"fasus-dashboard.html?fasus=" +
+"fasus.html?fasus="+
 encodeURIComponent(fasus);
 
 }
+
+document.addEventListener("click", function(e){
+
+if(!e.target.closest(".searchBox")){
+suggest.innerHTML="";
+}
+
+});
 
 </script>
 
