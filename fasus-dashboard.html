@@ -1,9 +1,7 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Fasus Dashboard</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -20,56 +18,20 @@ color:white;
 .header{
 background:#FFD100;
 color:black;
-padding:15px;
-font-size:26px;
+padding:20px;
+font-size:28px;
 font-weight:bold;
-display:flex;
-justify-content:space-between;
-align-items:center;
-}
-
-.logo{
-height:40px;
 }
 
 .container{
-padding:20px;
-}
-
-.grid{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:20px;
-margin-bottom:20px;
+padding:30px;
 }
 
 .card{
-background:#1c1c1c;
+background:#1a1a1a;
 padding:20px;
+margin-bottom:20px;
 border-radius:10px;
-}
-
-.card-title{
-font-size:18px;
-margin-bottom:10px;
-}
-
-.big-number{
-font-size:28px;
-font-weight:bold;
-margin-bottom:10px;
-}
-
-.row{
-display:flex;
-gap:20px;
-}
-
-.small-card{
-flex:1;
-background:#2a2a2a;
-padding:15px;
-border-radius:8px;
 }
 
 table{
@@ -84,50 +46,16 @@ padding:10px;
 }
 
 td{
-padding:8px;
+padding:10px;
 border-bottom:1px solid #333;
 }
 
-.back-button{
+button{
 background:#FFD100;
+padding:10px;
 border:none;
-padding:10px 20px;
-font-weight:bold;
 cursor:pointer;
-margin:10px;
-}
-
-.spinner{
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:rgba(0,0,0,0.7);
-display:flex;
-justify-content:center;
-align-items:center;
-z-index:999;
-}
-
-.loader{
-border:6px solid #333;
-border-top:6px solid #FFD100;
-border-radius:50%;
-width:60px;
-height:60px;
-animation:spin 1s linear infinite;
-}
-
-@keyframes spin{
-0%{transform:rotate(0deg);}
-100%{transform:rotate(360deg);}
-}
-
-.last-update{
-font-size:14px;
-color:#aaa;
-margin-top:5px;
+margin-bottom:20px;
 }
 
 </style>
@@ -135,77 +63,49 @@ margin-top:5px;
 
 <body>
 
-<div class="spinner" id="spinner">
-<div class="loader"></div>
+<div class="header"
+id="title">
+Dashboard
 </div>
-
-<div class="header">
-
-<div id="fasusName">Dashboard</div>
-
-<img src="logo-ut.png" class="logo">
-
-</div>
-
-<button class="back-button" onclick="goBack()">
-← Back
-</button>
 
 <div class="container">
 
-<div class="last-update" id="lastUpdate">
-Last updated: -
-</div>
+<button onclick="goBack()">
+← Back
+</button>
 
-<div class="grid">
+<div>
+Last updated:
+<span id="lastUpdated">-</span>
+</div>
 
 <div class="card">
 
-<div class="card-title">
-Financial Summary
+<h2>Financial Summary</h2>
+
+<div>Total Amount:
+<span id="total"></span>
 </div>
 
-<div class="big-number" id="totalAmount">
-Rp0
+<div>Tersisa:
+<span id="remaining"></span>
 </div>
 
-<div class="row">
-
-<div class="small-card">
-Amount Tersisa
-<br>
-<span id="remainingAmount">Rp0</span>
-</div>
-
-<div class="small-card">
-Amount Terpakai
-<br>
-<span id="usedAmount">Rp0</span>
-</div>
-
+<div>Terpakai:
+<span id="used"></span>
 </div>
 
 </div>
 
 <div class="card">
 
-<div class="card-title">
-Budget Breakdown
-</div>
-
-<canvas id="budgetChart"></canvas>
-
-</div>
+<canvas id="chart"></canvas>
 
 </div>
 
 <div class="card">
 
-<div class="card-title">
-Detail List
-</div>
-
-<div style="max-height:400px; overflow:auto;">
+<h2>Detail List</h2>
 
 <table>
 
@@ -218,7 +118,7 @@ Detail List
 </tr>
 </thead>
 
-<tbody id="detailTable">
+<tbody id="table">
 </tbody>
 
 </table>
@@ -227,41 +127,23 @@ Detail List
 
 </div>
 
-</div>
-
 <script>
 
-const webhookURL =
+const API =
 "https://dummyacountsubhan1.app.n8n.cloud/webhook/check-budget";
 
 const params =
-new URLSearchParams(window.location.search);
+new URLSearchParams(
+window.location.search
+);
 
 const fasus =
-params.get("name");
+params.get("fasus");
 
-document.getElementById("fasusName").innerText =
-fasus + " Dashboard";
+document.getElementById("title").innerText =
+fasus+" Dashboard";
 
-let chart;
-let isLoading = false;
-let firstLoad = true;
-
-
-async function loadDashboard(){
-
-if(isLoading) return;
-
-isLoading = true;
-
-if(firstLoad){
-showSpinner();
-}
-
-try{
-
-const response =
-await fetch(webhookURL,{
+fetch(API,{
 method:"POST",
 headers:{
 "Content-Type":"application/json"
@@ -269,213 +151,64 @@ headers:{
 body:JSON.stringify({
 fasus:fasus
 })
-});
+})
+.then(res=>res.json())
+.then(data=>{
 
-const data =
-await response.json();
+if(!data.success) return;
 
-updateSummary(data.summary);
+document.getElementById("lastUpdated").innerText =
+new Date(data.last_updated)
+.toLocaleString();
 
-updateDetails(data.details);
+document.getElementById("total").innerText =
+data.summary.total_amount;
 
-updateLastUpdated();
+document.getElementById("remaining").innerText =
+data.summary.total_remaining;
 
-}catch(e){
+document.getElementById("used").innerText =
+data.summary.total_used;
 
-console.log("refresh error");
+const tbody =
+document.getElementById("table");
 
-}
+data.details.forEach(row=>{
 
-if(firstLoad){
-hideSpinner();
-firstLoad = false;
-}
-
-isLoading = false;
-
-}
-
-
-function updateSummary(summary){
-
-const lines =
-summary.split("\n");
-
-const total =
-extractNumber(lines[0]);
-
-const remaining =
-extractNumber(lines[1]);
-
-const used =
-total - remaining;
-
-document.getElementById("totalAmount")
-.innerText =
-formatRupiah(total);
-
-document.getElementById("remainingAmount")
-.innerText =
-formatRupiah(remaining);
-
-document.getElementById("usedAmount")
-.innerText =
-formatRupiah(used);
-
-drawChart(used, remaining);
-
-}
-
-
-function updateDetails(details){
-
-const table =
-document.getElementById("detailTable");
-
-table.innerHTML = "";
-
-const rows =
-details.split("\n\n");
-
-rows.forEach(row=>{
-
-const lines =
-row.split("\n");
-
-let pjb="";
-let serial="";
-let expired="";
-let sisa="";
-
-lines.forEach(line=>{
-
-if(line.includes("PJB"))
-pjb=line.split(":")[1];
-
-if(line.includes("Serial"))
-serial=line.split(":")[1];
-
-if(line.includes("Expired"))
-expired=line.split(":")[1];
-
-if(line.includes("Sisa"))
-sisa=line.split(":")[1];
-
-});
-
-table.innerHTML +=
-`
+tbody.innerHTML+=`
 <tr>
-<td>${pjb}</td>
-<td>${serial}</td>
-<td>${expired}</td>
-<td>${sisa}</td>
+<td>${row.pjb}</td>
+<td>${row.serial}</td>
+<td>${row.expired}</td>
+<td>${row.sisa}</td>
 </tr>
 `;
 
 });
 
-}
-
-
-function drawChart(used, remaining){
-
-const ctx =
-document.getElementById("budgetChart");
-
-if(chart) chart.destroy();
-
-chart =
-new Chart(ctx,{
-
+new Chart(
+document.getElementById("chart"),
+{
 type:"pie",
-
 data:{
-
 labels:[
-"Terpakai",
-"Tersisa"
+"Used",
+"Remaining"
 ],
-
 datasets:[{
-
 data:[
-used,
-remaining
-],
-
-backgroundColor:[
-"#ff4444",
-"#00C851"
+data.summary.total_used,
+data.summary.total_remaining
 ]
-
 }]
-
 }
+});
 
 });
 
-}
-
-
-function updateLastUpdated(){
-
-const now =
-new Date();
-
-const time =
-now.toLocaleTimeString("id-ID");
-
-document.getElementById("lastUpdate")
-.innerText =
-"Last updated: " + time;
-
-}
-
-
-function extractNumber(text){
-
-return parseInt(
-text.replace(/[^\d]/g,"")
-);
-
-}
-
-
-function formatRupiah(number){
-
-return "Rp" +
-number.toLocaleString("id-ID");
-
-}
-
-
-function showSpinner(){
-
-document.getElementById("spinner")
-.style.display="flex";
-
-}
-
-
-function hideSpinner(){
-
-document.getElementById("spinner")
-.style.display="none";
-
-}
-
-
 function goBack(){
-
 window.location.href="index.html";
-
 }
-
-
-loadDashboard();
-
-setInterval(loadDashboard,60000);
 
 </script>
 
