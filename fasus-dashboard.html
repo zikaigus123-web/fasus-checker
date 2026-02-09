@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fasus Dashboard</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+body{
+margin:0;
+font-family:Arial;
+background:#0b0b0b;
+color:white;
+}
+
+.header{
+background:#FFD100;
+color:black;
+padding:20px;
+font-size:28px;
+font-weight:bold;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+.logo{
+height:40px;
+}
+
+.container{
+padding:30px;
+}
+
+.grid{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:20px;
+}
+
+.card{
+background:#1c1c1c;
+padding:20px;
+border-radius:10px;
+}
+
+.big{
+font-size:28px;
+font-weight:bold;
+margin-top:10px;
+}
+
+.row{
+display:flex;
+gap:20px;
+margin-top:20px;
+}
+
+.small-card{
+background:#1c1c1c;
+padding:15px;
+border-radius:10px;
+flex:1;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:20px;
+}
+
+th, td{
+padding:10px;
+border-bottom:1px solid #333;
+text-align:left;
+}
+
+th{
+background:#FFD100;
+color:black;
+}
+
+.back{
+margin-top:20px;
+padding:10px 20px;
+background:#FFD100;
+border:none;
+cursor:pointer;
+font-weight:bold;
+}
+
+.spinner{
+border:6px solid #333;
+border-top:6px solid #FFD100;
+border-radius:50%;
+width:50px;
+height:50px;
+animation:spin 1s linear infinite;
+margin:50px auto;
+}
+
+@keyframes spin{
+0%{transform:rotate(0deg);}
+100%{transform:rotate(360deg);}
+}
+
+.center{
+text-align:center;
+}
+
+</style>
+</head>
+<body>
+
+<div class="header">
+<div id="fasusTitle">Dashboard</div>
+<img src="logo-ut.png" class="logo">
+</div>
+
+<div class="container">
+
+<button class="back" onclick="goBack()">← Back</button>
+
+<div id="loading" class="center">
+<div class="spinner"></div>
+Loading dashboard...
+</div>
+
+<div id="dashboard" style="display:none;">
+
+<div class="grid">
+
+<div class="card">
+Financial Summary
+
+<div class="big" id="totalAmount">Rp0</div>
+
+<div class="row">
+
+<div class="small-card">
+Tersisa
+<div id="sisaAmount">Rp0</div>
+</div>
+
+<div class="small-card">
+Terpakai
+<div id="usedAmount">Rp0</div>
+</div>
+
+</div>
+
+</div>
+
+<div class="card">
+<canvas id="pieChart"></canvas>
+</div>
+
+</div>
+
+<div class="card">
+
+Detail List
+
+<table>
+<thead>
+<tr>
+<th>No</th>
+<th>PJB</th>
+<th>Serial</th>
+<th>Expired</th>
+<th>Sisa</th>
+</tr>
+</thead>
+
+<tbody id="tableBody"></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+</div>
+
+
+<script>
+
+function goBack(){
+window.location.href="index.html";
+}
+
+
+function getFasusFromURL(){
+const params=new URLSearchParams(window.location.search);
+return params.get("name");
+}
+
+
+async function loadDashboard(){
+
+const fasus=getFasusFromURL();
+
+document.getElementById("fasusTitle").innerText=fasus+" Dashboard";
+
+const response=await fetch(
+"https://dummyacountsubhan1.app.n8n.cloud/webhook/check-budget",
+{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({fasus:fasus})
+});
+
+const data=await response.json();
+
+renderDashboard(data);
+
+}
+
+
+function renderDashboard(data){
+
+document.getElementById("loading").style.display="none";
+document.getElementById("dashboard").style.display="block";
+
+
+document.getElementById("totalAmount").innerText=data.totalAmount;
+document.getElementById("sisaAmount").innerText=data.totalSisa;
+document.getElementById("usedAmount").innerText=data.totalUsed;
+
+
+const ctx=document.getElementById("pieChart");
+
+new Chart(ctx,{
+type:"pie",
+data:{
+labels:["Used","Remaining"],
+datasets:[{
+data:[
+data.usedPercent,
+100-data.usedPercent
+]
+}]
+}
+});
+
+
+const tbody=document.getElementById("tableBody");
+
+data.details.forEach((item,index)=>{
+
+const row=`
+<tr>
+<td>${index+1}</td>
+<td>${item.pjb}</td>
+<td>${item.serial}</td>
+<td>${item.expired}</td>
+<td>${item.sisa}</td>
+</tr>
+`;
+
+tbody.innerHTML+=row;
+
+});
+
+
+}
+
+
+loadDashboard();
+
+</script>
+
+</body>
+</html>
