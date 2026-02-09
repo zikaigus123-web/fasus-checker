@@ -13,7 +13,7 @@ margin:0;
 font-family:Arial;
 background:#000;
 color:white;
-background-image:url("background.jpg");
+background-image:url("./background.jpg");
 background-size:cover;
 background-position:center;
 }
@@ -29,15 +29,23 @@ align-items:center;
 position:relative;
 }
 
-.logo{
+.logoContainer{
 position:absolute;
-top:20px;
+top:25px;
 left:50%;
 transform:translateX(-50%);
+display:flex;
+flex-direction:column;
+align-items:center;
+gap:10px;
 }
 
-.logo img{
-height:80px;
+.logoUT{
+height:70px;
+}
+
+.logoInsan{
+height:40px;
 }
 
 .title{
@@ -50,10 +58,6 @@ text-align:center;
 .searchBox{
 display:flex;
 gap:10px;
-position:relative;
-}
-
-.inputContainer{
 position:relative;
 }
 
@@ -83,6 +87,7 @@ background:#ffcc00;
 .suggest{
 position:absolute;
 top:60px;
+left:0;
 background:white;
 color:black;
 width:400px;
@@ -91,22 +96,15 @@ overflow:hidden;
 z-index:999;
 max-height:250px;
 overflow-y:auto;
-box-shadow:0 5px 15px rgba(0,0,0,0.4);
 }
 
 .suggest div{
-padding:12px;
+padding:10px;
 cursor:pointer;
 }
 
 .suggest div:hover{
 background:#eee;
-}
-
-.loading{
-margin-top:10px;
-color:#FFD100;
-font-size:14px;
 }
 
 </style>
@@ -117,8 +115,12 @@ font-size:14px;
 
 <div class="overlay">
 
-<div class="logo">
-<img src="logo-ut-school.png">
+<div class="logoContainer">
+
+<img src="./logo-ut.png" class="logoUT">
+
+<img src="./logo-insan.png" class="logoInsan">
+
 </div>
 
 <div class="title">
@@ -127,17 +129,13 @@ CEK BUDGET FASUS
 
 <div class="searchBox">
 
-<div class="inputContainer">
+<div>
 
 <input id="input"
 placeholder="Ketik nama perusahaan..."
 autocomplete="off">
 
 <div id="suggest" class="suggest"></div>
-
-<div id="loading" class="loading">
-Loading data...
-</div>
 
 </div>
 
@@ -156,69 +154,38 @@ const sheetURL =
 
 let fasusList = [];
 
-function parseCSV(text){
+fetch(sheetURL)
+.then(res=>res.text())
+.then(text=>{
 
-const lines = text.split("\n");
-const headers = lines[0].split(",");
+const rows = text.split(/\r?\n/);
 
-let fasusIndex = -1;
+for(let i=1;i<rows.length;i++){
 
-for(let i=0;i<headers.length;i++){
+let row = rows[i].trim();
 
-const h = headers[i].toLowerCase().trim();
+if(!row) continue;
 
-if(h.includes("pemilik") || h.includes("fasus")){
-fasusIndex = i;
-break;
-}
+let cols = row.split(",");
 
-}
+let name = cols[0];
 
-if(fasusIndex === -1){
-alert("Kolom Pemilik Fasus tidak ditemukan");
-return;
-}
+if(!name) continue;
 
-for(let i=1;i<lines.length;i++){
+name = name.replace(/"/g,"").trim();
 
-const cols = lines[i].split(",");
-
-if(cols.length > fasusIndex){
-
-let name = cols[fasusIndex]
-.replace(/"/g,"")
-.trim();
-
-if(name !== "" && !fasusList.includes(name)){
+if(name && !fasusList.includes(name))
 fasusList.push(name);
-}
-
-}
 
 }
 
 fasusList.sort();
 
-}
-
-fetch(sheetURL)
-.then(res=>res.text())
-.then(text=>{
-
-parseCSV(text);
-
-document.getElementById("loading").style.display="none";
-
 console.log("Loaded:", fasusList);
 
 })
 .catch(err=>{
-
 console.error(err);
-
-document.getElementById("loading").innerText =
-"Gagal load data";
-
 });
 
 const input =
@@ -230,18 +197,18 @@ document.getElementById("suggest");
 input.addEventListener("input", function(){
 
 const value =
-this.value.toLowerCase();
+this.value.toLowerCase().trim();
 
 suggest.innerHTML="";
 
-if(value==="") return;
+if(!value) return;
 
 const filtered =
 fasusList.filter(f =>
 f.toLowerCase().includes(value)
 );
 
-filtered.slice(0,8).forEach(f=>{
+filtered.slice(0,5).forEach(f=>{
 
 const div =
 document.createElement("div");
@@ -267,13 +234,16 @@ function checkFasus(){
 const fasus =
 input.value.trim();
 
-if(fasus===""){
+if(!fasus){
+
 alert("Masukkan nama perusahaan");
+
 return;
+
 }
 
 window.location.href =
-"fasus.html?fasus=" +
+"fasus-dashboard.html?fasus="+
 encodeURIComponent(fasus);
 
 }
@@ -281,7 +251,9 @@ encodeURIComponent(fasus);
 document.addEventListener("click", function(e){
 
 if(!e.target.closest(".searchBox")){
+
 suggest.innerHTML="";
+
 }
 
 });
