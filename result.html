@@ -1,83 +1,80 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-<title>Hasil Fasus</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Loading Dashboard</title>
 
 <style>
+
 body{
+margin:0;
 font-family:Arial;
-background:#111;
+background:#0b0b0b;
 color:white;
-padding:40px;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+flex-direction:column;
 }
 
-.container{
-max-width:800px;
-margin:auto;
-}
-
-.title{
-font-size:32px;
+.spinner{
+border:6px solid #333;
+border-top:6px solid #FFD100;
+border-radius:50%;
+width:60px;
+height:60px;
+animation:spin 1s linear infinite;
 margin-bottom:20px;
 }
 
-.result-box{
-background:#222;
-padding:20px;
-border-radius:8px;
+@keyframes spin{
+0%{transform:rotate(0deg);}
+100%{transform:rotate(360deg);}
 }
+
+.text{
+font-size:18px;
+color:#aaa;
+}
+
 </style>
 
 </head>
 
 <body>
 
-<div class="container">
+<div class="spinner"></div>
 
-<div class="title">
-Hasil Pencarian Fasus
-</div>
-
-<div class="result-box" id="result">
-Loading...
-</div>
-
+<div class="text">
+Loading dashboard...
 </div>
 
 <script>
 
-const urlParams = new URLSearchParams(window.location.search);
+const params =
+new URLSearchParams(window.location.search);
 
-const fasus = urlParams.get("fasus");
+const fasus =
+params.get("name");
 
-fetch(
-"https://dummyacountsubhan1.app.n8n.cloud/webhook/check-budget",
-{
-method:"POST",
-headers:{
-"Content-Type":"application/json"
-},
-body:JSON.stringify({
-fasus: fasus
-})
-}
-)
-.then(res=>res.json())
-.then(data=>{
+if(!fasus){
 
-if(data.summary){
-
-document.getElementById("result").innerText =
-data.summary + "\n\n" + data.details;
+window.location.href="index.html";
 
 }else{
 
-document.getElementById("result").innerText =
-"Tidak ditemukan";
+setTimeout(()=>{
+
+window.location.href=
+"fasus-dashboard.html?name="+
+encodeURIComponent(fasus);
+
+},500);
 
 }
-
-});
 
 </script>
 
