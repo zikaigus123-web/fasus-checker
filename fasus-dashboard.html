@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Dashboard Fasus</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -19,13 +20,15 @@ color:white;
 .header{
 background:#FFD100;
 color:black;
-padding:20px;
+padding:18px;
 font-size:24px;
 font-weight:bold;
+display:flex;
+justify-content:space-between;
 }
 
 .back{
-margin:20px;
+margin:15px;
 padding:10px 20px;
 background:#FFD100;
 border:none;
@@ -40,7 +43,7 @@ padding:20px;
 .card{
 background:#1a1a1a;
 padding:20px;
-border-radius:8px;
+border-radius:10px;
 margin-bottom:20px;
 }
 
@@ -67,9 +70,33 @@ border-bottom:1px solid #333;
 }
 
 .spinner{
-text-align:center;
-margin-top:50px;
-font-size:20px;
+position:fixed;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.7);
+display:flex;
+justify-content:center;
+align-items:center;
+z-index:10;
+}
+
+.loader{
+border:8px solid #333;
+border-top:8px solid #FFD100;
+border-radius:50%;
+width:70px;
+height:70px;
+animation:spin 1s linear infinite;
+}
+
+@keyframes spin{
+0%{transform:rotate(0deg);}
+100%{transform:rotate(360deg);}
+}
+
+.lastUpdated{
+color:#aaa;
+margin-bottom:15px;
 }
 
 </style>
@@ -77,20 +104,21 @@ font-size:20px;
 
 <body>
 
-<div class="header" id="title">Dashboard</div>
+<div id="spinner" class="spinner">
+<div class="loader"></div>
+</div>
+
+<div class="header">
+<div id="title">Dashboard</div>
+<div id="lastUpdated"></div>
+</div>
 
 <button class="back"
 onclick="window.location.href='index.html'">
 ← Back
 </button>
 
-<div class="container">
-
-<div id="loading" class="spinner">
-Loading dashboard...
-</div>
-
-<div id="content" style="display:none;">
+<div class="container" id="content" style="display:none;">
 
 <div class="grid">
 
@@ -98,11 +126,14 @@ Loading dashboard...
 
 <h3>Financial Summary</h3>
 
-<p>Total Budget: Rp<span id="total"></span></p>
+<p>Total Budget:
+<span id="total"></span></p>
 
-<p>Terpakai: Rp<span id="used"></span></p>
+<p>Terpakai:
+<span id="used"></span></p>
 
-<p>Tersisa: Rp<span id="remaining"></span></p>
+<p>Tersisa:
+<span id="remaining"></span></p>
 
 </div>
 
@@ -144,18 +175,23 @@ Loading dashboard...
 
 </div>
 
-</div>
-
 <script>
 
-const urlParams =
+function formatRupiah(num){
+
+return "Rp "+
+num.toLocaleString("id-ID");
+
+}
+
+const params=
 new URLSearchParams(window.location.search);
 
-const fasus =
-urlParams.get("fasus");
+const fasus=
+params.get("fasus");
 
-document.getElementById("title").innerText =
-fasus + " Dashboard";
+document.getElementById("title").innerText=
+fasus+" Dashboard";
 
 fetch(
 "https://dummyacountsubhan1.app.n8n.cloud/webhook/check-budget",
@@ -164,31 +200,32 @@ method:"POST",
 headers:{
 "Content-Type":"application/json"
 },
-body:JSON.stringify({
-fasus:fasus
-})
+body:JSON.stringify({fasus})
 }
 )
 .then(res=>res.json())
 .then(data=>{
 
-document.getElementById("loading").style.display="none";
-
+document.getElementById("spinner").style.display="none";
 document.getElementById("content").style.display="block";
 
-document.getElementById("total").innerText =
-data.summary.total_budget.toLocaleString();
+document.getElementById("lastUpdated").innerText=
+"Last updated: "+
+new Date(data.last_updated).toLocaleString();
 
-document.getElementById("used").innerText =
-data.summary.total_used.toLocaleString();
+document.getElementById("total").innerText=
+formatRupiah(data.summary.total_budget);
 
-document.getElementById("remaining").innerText =
-data.summary.total_remaining.toLocaleString();
+document.getElementById("used").innerText=
+formatRupiah(data.summary.total_used);
+
+document.getElementById("remaining").innerText=
+formatRupiah(data.summary.total_remaining);
 
 new Chart(document.getElementById("pie"),{
 type:"pie",
 data:{
-labels:["Used","Remaining"],
+labels:["Terpakai","Tersisa"],
 datasets:[{
 data:[
 data.summary.total_used,
@@ -202,8 +239,21 @@ let done=0;
 let notyet=0;
 
 data.details.forEach(d=>{
-if(d.status==="DONE") done++;
-else notyet++;
+
+if(d.status==="DONE")
+done++;
+else
+notyet++;
+
+document.getElementById("table").innerHTML+=
+`<tr>
+<td>${d.pjb}</td>
+<td>${d.serial}</td>
+<td>${d.expired}</td>
+<td>${formatRupiah(d.sisa)}</td>
+<td>${d.status}</td>
+</tr>`;
+
 });
 
 new Chart(document.getElementById("bar"),{
@@ -214,22 +264,6 @@ datasets:[{
 data:[done,notyet]
 }]
 }
-});
-
-const table =
-document.getElementById("table");
-
-data.details.forEach(d=>{
-
-table.innerHTML+=
-"<tr>"+
-"<td>"+d.pjb+"</td>"+
-"<td>"+d.serial+"</td>"+
-"<td>"+d.expired+"</td>"+
-"<td>"+d.sisa+"</td>"+
-"<td>"+d.status+"</td>"+
-"</tr>";
-
 });
 
 });
