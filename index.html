@@ -3,18 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Cek Budget Fasus</title>
 
 <style>
 
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:Arial, sans-serif;
-}
-
 body{
+margin:0;
+font-family:Arial;
+background:url("background.jpg") center/cover no-repeat;
 height:100vh;
 display:flex;
 justify-content:center;
@@ -22,123 +19,77 @@ align-items:center;
 color:white;
 }
 
-/* Background */
-.background{
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background-image:url('background.jpg');
-background-size:cover;
-background-position:center;
-z-index:-2;
-}
-
-/* Overlay gelap */
 .overlay{
-position:fixed;
-top:0;
-left:0;
+position:absolute;
 width:100%;
 height:100%;
 background:rgba(0,0,0,0.65);
-z-index:-1;
 }
 
-/* Logo kanan atas */
-.logo-top{
-position:fixed;
-top:20px;
-right:30px;
-width:120px;
-}
-
-/* Logo tengah bawah */
-.logo-bottom{
-position:fixed;
-bottom:25px;
-left:50%;
-transform:translateX(-50%);
-width:180px;
-opacity:0.9;
-}
-
-/* Container */
 .container{
+position:relative;
 text-align:center;
+z-index:1;
 }
 
-/* Title */
 .title{
-font-size:48px;
+font-size:42px;
 font-weight:bold;
 margin-bottom:20px;
 }
 
-/* Search box wrapper */
 .search-box{
 position:relative;
-display:inline-block;
 }
 
-/* Input */
 input{
-padding:12px;
-font-size:18px;
+padding:14px;
 width:350px;
-border:none;
-border-radius:6px;
-}
-
-/* Button */
-button{
-padding:12px 20px;
 font-size:18px;
-background:#FFD100;
-border:none;
 border-radius:6px;
-cursor:pointer;
-font-weight:bold;
-margin-left:10px;
+border:none;
 }
 
-button:hover{
-background:#e6bc00;
-}
-
-/* Suggestions dropdown */
 .suggestions{
 position:absolute;
-top:100%;
-left:0;
 width:100%;
 background:white;
 color:black;
 border-radius:6px;
 margin-top:5px;
 overflow:hidden;
-box-shadow:0 4px 15px rgba(0,0,0,0.3);
-text-align:left;
-z-index:999;
 }
 
-/* Suggestion item */
 .suggestion-item{
 padding:12px;
 cursor:pointer;
 }
 
 .suggestion-item:hover{
-background:#f1f1f1;
+background:#eee;
+}
+
+.logo-top{
+position:absolute;
+top:20px;
+right:20px;
+width:120px;
+}
+
+.logo-bottom{
+position:absolute;
+bottom:20px;
+left:50%;
+transform:translateX(-50%);
+width:180px;
 }
 
 </style>
 
 </head>
+
 <body>
 
-<div class="background"></div>
 <div class="overlay"></div>
 
 <img src="logo-ut.png" class="logo-top">
@@ -153,9 +104,9 @@ CEK BUDGET FASUS
 <div class="search-box">
 
 <input
-id="fasusInput"
+id="searchInput"
 placeholder="Masukkan nama fasus"
-oninput="showSuggestions()"
+oninput="loadSuggestions()"
 autocomplete="off"
 >
 
@@ -163,94 +114,70 @@ autocomplete="off"
 
 </div>
 
-<button onclick="checkBudget()">
-Check
-</button>
-
 </div>
 
 <script>
 
-/* Redirect ke halaman result */
-function checkBudget(){
+const suggestURL =
+"https://dummyacountsubhan1.app.n8n.cloud/webhook/fasus-suggest";
 
-const fasus =
-document.getElementById("fasusInput").value.trim();
-
-if(!fasus) return;
-
-window.location.href =
-"result.html?fasus=" +
-encodeURIComponent(fasus);
-
-}
-
-
-/* Show suggestions */
-async function showSuggestions(){
+async function loadSuggestions(){
 
 const query =
-document.getElementById("fasusInput").value.trim();
-
-const box =
-document.getElementById("suggestions");
+document.getElementById("searchInput").value;
 
 if(query.length < 2){
 
-box.innerHTML = "";
+document.getElementById("suggestions").innerHTML="";
 return;
 
 }
 
-try{
-
 const response =
-await fetch(
-"https://dummyacountsubhan1.app.n8n.cloud/webhook/fasus-suggest",
-{
+await fetch(suggestURL,{
 method:"POST",
 headers:{
 "Content-Type":"application/json"
 },
 body:JSON.stringify({
-query: query
+fasus:query
 })
+});
+
+const data =
+await response.json();
+
+showSuggestions(data.suggestions);
+
 }
-);
 
-const data = await response.json();
+function showSuggestions(list){
 
-box.innerHTML = "";
+const box =
+document.getElementById("suggestions");
 
-if(!data.suggestions) return;
+box.innerHTML="";
 
-data.suggestions.forEach(item=>{
+list.forEach(name=>{
 
 const div =
 document.createElement("div");
 
-div.className =
-"suggestion-item";
+div.className="suggestion-item";
 
-div.innerText = item;
+div.innerText=name;
 
-div.onclick = ()=>{
+div.onclick=()=>{
 
-window.location.href =
-"result.html?fasus=" +
-encodeURIComponent(item);
+window.location.href=
+"result.html?name="+
+encodeURIComponent(name);
 
 };
 
 box.appendChild(div);
 
 });
-
-}catch(e){
-
-box.innerHTML = "";
-
-}
 
 }
 
