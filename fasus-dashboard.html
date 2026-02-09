@@ -17,6 +17,20 @@ background:#0b0b0b;
 color:white;
 }
 
+/* LOGO */
+.logo-container{
+text-align:center;
+padding-top:20px;
+padding-bottom:10px;
+background:#0b0b0b;
+}
+
+.logo-ut{
+height:70px;
+object-fit:contain;
+}
+
+/* HEADER */
 .header{
 background:#FFD100;
 color:black;
@@ -25,8 +39,10 @@ font-size:24px;
 font-weight:bold;
 display:flex;
 justify-content:space-between;
+align-items:center;
 }
 
+/* BACK BUTTON */
 .back{
 margin:15px;
 padding:10px 20px;
@@ -36,6 +52,7 @@ cursor:pointer;
 font-weight:bold;
 }
 
+/* CONTENT */
 .container{
 padding:20px;
 }
@@ -53,6 +70,7 @@ grid-template-columns:1fr 1fr;
 gap:20px;
 }
 
+/* TABLE */
 table{
 width:100%;
 border-collapse:collapse;
@@ -69,6 +87,7 @@ padding:10px;
 border-bottom:1px solid #333;
 }
 
+/* SPINNER */
 .spinner{
 position:fixed;
 width:100%;
@@ -94,6 +113,7 @@ animation:spin 1s linear infinite;
 100%{transform:rotate(360deg);}
 }
 
+/* LAST UPDATED */
 .lastUpdated{
 color:#aaa;
 margin-bottom:15px;
@@ -104,20 +124,29 @@ margin-bottom:15px;
 
 <body>
 
+<!-- LOGO -->
+<div class="logo-container">
+<img src="ut-school-logo.png" class="logo-ut">
+</div>
+
+<!-- SPINNER -->
 <div id="spinner" class="spinner">
 <div class="loader"></div>
 </div>
 
+<!-- HEADER -->
 <div class="header">
 <div id="title">Dashboard</div>
 <div id="lastUpdated"></div>
 </div>
 
+<!-- BACK BUTTON -->
 <button class="back"
 onclick="window.location.href='index.html'">
 ← Back
 </button>
 
+<!-- CONTENT -->
 <div class="container" id="content" style="display:none;">
 
 <div class="grid">
@@ -127,13 +156,13 @@ onclick="window.location.href='index.html'">
 <h3>Financial Summary</h3>
 
 <p>Total Budget:
-<span id="total"></span></p>
+<span id="total">Rp 0</span></p>
 
 <p>Terpakai:
-<span id="used"></span></p>
+<span id="used">Rp 0</span></p>
 
 <p>Tersisa:
-<span id="remaining"></span></p>
+<span id="remaining">Rp 0</span></p>
 
 </div>
 
@@ -178,21 +207,17 @@ onclick="window.location.href='index.html'">
 <script>
 
 function formatRupiah(num){
-
-return "Rp "+
-num.toLocaleString("id-ID");
-
+return "Rp "+Number(num).toLocaleString("id-ID");
 }
 
-const params=
-new URLSearchParams(window.location.search);
+const params=new URLSearchParams(window.location.search);
 
-const fasus=
-params.get("fasus");
+const fasus=params.get("fasus");
 
 document.getElementById("title").innerText=
 fasus+" Dashboard";
 
+/* CALL N8N WEBHOOK */
 fetch(
 "https://dummyacountsubhan1.app.n8n.cloud/webhook/check-budget",
 {
@@ -206,13 +231,16 @@ body:JSON.stringify({fasus})
 .then(res=>res.json())
 .then(data=>{
 
+/* STOP SPINNER */
 document.getElementById("spinner").style.display="none";
 document.getElementById("content").style.display="block";
 
+/* LAST UPDATED */
 document.getElementById("lastUpdated").innerText=
 "Last updated: "+
 new Date(data.last_updated).toLocaleString();
 
+/* SUMMARY */
 document.getElementById("total").innerText=
 formatRupiah(data.summary.total_budget);
 
@@ -222,6 +250,7 @@ formatRupiah(data.summary.total_used);
 document.getElementById("remaining").innerText=
 formatRupiah(data.summary.total_remaining);
 
+/* PIE CHART */
 new Chart(document.getElementById("pie"),{
 type:"pie",
 data:{
@@ -230,11 +259,16 @@ datasets:[{
 data:[
 data.summary.total_used,
 data.summary.total_remaining
+],
+backgroundColor:[
+"#FFD100",
+"#444"
 ]
 }]
 }
 });
 
+/* TABLE AND BAR */
 let done=0;
 let notyet=0;
 
@@ -256,16 +290,26 @@ document.getElementById("table").innerHTML+=
 
 });
 
+/* BAR CHART */
 new Chart(document.getElementById("bar"),{
 type:"bar",
 data:{
 labels:["DONE","NOT YET"],
 datasets:[{
-data:[done,notyet]
+data:[done,notyet],
+backgroundColor:[
+"#FFD100",
+"#555"
+]
 }]
 }
 });
 
+})
+.catch(err=>{
+document.getElementById("spinner").style.display="none";
+alert("Gagal load data dari server");
+console.log(err);
 });
 
 </script>
