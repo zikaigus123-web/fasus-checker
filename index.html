@@ -10,9 +10,12 @@
 body{
 margin:0;
 font-family:Arial;
-background:url("background.jpg") center/cover no-repeat fixed;
 color:white;
-text-align:center;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+background:url('background.jpg') center/cover no-repeat;
 }
 
 .overlay{
@@ -21,12 +24,14 @@ top:0;
 left:0;
 width:100%;
 height:100%;
-background:rgba(0,0,0,0.6);
-z-index:-1;
+background:rgba(0,0,0,0.65);
+z-index:0;
 }
 
 .container{
-margin-top:150px;
+position:relative;
+z-index:1;
+text-align:center;
 }
 
 .title{
@@ -38,15 +43,30 @@ margin-bottom:20px;
 .search-box{
 position:relative;
 display:inline-block;
-width:400px;
 }
 
 input{
-width:100%;
-padding:15px;
+width:400px;
+padding:14px;
 font-size:18px;
 border-radius:6px;
 border:none;
+outline:none;
+}
+
+button{
+margin-top:15px;
+padding:12px 30px;
+font-size:18px;
+font-weight:bold;
+background:#FFD100;
+border:none;
+border-radius:6px;
+cursor:pointer;
+}
+
+button:hover{
+background:#e6bc00;
 }
 
 .suggestions{
@@ -56,31 +76,40 @@ background:white;
 color:black;
 border-radius:6px;
 margin-top:5px;
-text-align:left;
+overflow:hidden;
+display:none;
+max-height:250px;
+overflow-y:auto;
 }
 
-.suggestion-item{
+.item{
 padding:12px;
 cursor:pointer;
 }
 
-.suggestion-item:hover{
+.item:hover{
 background:#eee;
 }
 
-button{
-margin-top:10px;
-padding:12px 25px;
-font-size:18px;
-background:#FFD100;
-border:none;
-border-radius:6px;
-cursor:pointer;
-font-weight:bold;
+.logo-top{
+position:fixed;
+top:20px;
+right:30px;
+width:120px;
+z-index:2;
+}
+
+.logo-bottom{
+position:fixed;
+bottom:25px;
+left:50%;
+transform:translateX(-50%);
+width:180px;
+z-index:2;
 }
 
 .spinner{
-margin-top:20px;
+margin-top:10px;
 display:none;
 }
 
@@ -91,33 +120,31 @@ display:none;
 
 <div class="overlay"></div>
 
+<img src="logo-ut.png" class="logo-top">
+<img src="logo-insan.png" class="logo-bottom">
+
 <div class="container">
 
-<div class="title">
-CEK BUDGET FASUS
-</div>
+<div class="title">CEK BUDGET FASUS</div>
 
 <div class="search-box">
 
-<input id="fasusInput"
+<input
+id="input"
 placeholder="Masukkan nama fasus"
-oninput="getSuggestions()">
+oninput="suggest()"
+autocomplete="off"
+>
 
-<div id="suggestions"
-class="suggestions"></div>
+<div id="suggestions" class="suggestions"></div>
 
 </div>
 
 <br>
 
-<button onclick="goDashboard()">
-Check
-</button>
+<button onclick="goDashboard()">Check</button>
 
-<div class="spinner"
-id="spinner">
-Loading...
-</div>
+<div class="spinner" id="spinner">Loading...</div>
 
 </div>
 
@@ -126,17 +153,35 @@ Loading...
 const SUGGEST_URL =
 "https://dummyacountsubhan1.app.n8n.cloud/webhook/fasus-suggest";
 
-function getSuggestions(){
+function goDashboard(){
+
+const fasus =
+document.getElementById("input").value.trim();
+
+if(!fasus) return;
+
+window.location.href =
+"fasus-dashboard.html?fasus=" +
+encodeURIComponent(fasus);
+
+}
+
+async function suggest(){
 
 const query =
-document.getElementById("fasusInput").value;
+document.getElementById("input").value;
 
-if(query.length<1){
-document.getElementById("suggestions").innerHTML="";
+const box =
+document.getElementById("suggestions");
+
+if(query.length < 1){
+box.style.display="none";
 return;
 }
 
-fetch(SUGGEST_URL,{
+try{
+
+const res = await fetch(SUGGEST_URL,{
 method:"POST",
 headers:{
 "Content-Type":"application/json"
@@ -144,50 +189,42 @@ headers:{
 body:JSON.stringify({
 query:query
 })
-})
-.then(res=>res.json())
-.then(data=>{
+});
 
-const box =
-document.getElementById("suggestions");
+const data = await res.json();
 
 box.innerHTML="";
 
-(data.suggestions||[])
-.forEach(name=>{
+if(data.suggestions && data.suggestions.length>0){
+
+data.suggestions.forEach(name=>{
 
 const div =
 document.createElement("div");
 
-div.className="suggestion-item";
+div.className="item";
 
 div.innerText=name;
 
 div.onclick=()=>{
-document.getElementById("fasusInput").value=name;
-box.innerHTML="";
+window.location.href =
+"fasus-dashboard.html?fasus=" +
+encodeURIComponent(name);
 };
 
 box.appendChild(div);
 
 });
 
-});
+box.style.display="block";
 
+}else{
+box.style.display="none";
 }
 
-function goDashboard(){
-
-const fasus =
-document.getElementById("fasusInput").value;
-
-if(!fasus) return;
-
-document.getElementById("spinner").style.display="block";
-
-window.location.href =
-"fasus-dashboard.html?fasus="+
-encodeURIComponent(fasus);
+}catch{
+box.style.display="none";
+}
 
 }
 
