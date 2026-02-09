@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Fasus Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Fasus</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -19,19 +20,34 @@ color:white;
 background:#FFD100;
 color:black;
 padding:20px;
-font-size:28px;
+font-size:24px;
+font-weight:bold;
+}
+
+.back{
+margin:20px;
+padding:10px 20px;
+background:#FFD100;
+border:none;
+cursor:pointer;
 font-weight:bold;
 }
 
 .container{
-padding:30px;
+padding:20px;
 }
 
 .card{
 background:#1a1a1a;
 padding:20px;
+border-radius:8px;
 margin-bottom:20px;
-border-radius:10px;
+}
+
+.grid{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:20px;
 }
 
 table{
@@ -50,12 +66,10 @@ padding:10px;
 border-bottom:1px solid #333;
 }
 
-button{
-background:#FFD100;
-padding:10px;
-border:none;
-cursor:pointer;
-margin-bottom:20px;
+.spinner{
+text-align:center;
+margin-top:50px;
+font-size:20px;
 }
 
 </style>
@@ -63,49 +77,52 @@ margin-bottom:20px;
 
 <body>
 
-<div class="header"
-id="title">
-Dashboard
-</div>
+<div class="header" id="title">Dashboard</div>
 
-<div class="container">
-
-<button onclick="goBack()">
+<button class="back"
+onclick="window.location.href='index.html'">
 ← Back
 </button>
 
-<div>
-Last updated:
-<span id="lastUpdated">-</span>
+<div class="container">
+
+<div id="loading" class="spinner">
+Loading dashboard...
 </div>
+
+<div id="content" style="display:none;">
+
+<div class="grid">
 
 <div class="card">
 
-<h2>Financial Summary</h2>
+<h3>Financial Summary</h3>
 
-<div>Total Amount:
-<span id="total"></span>
-</div>
+<p>Total Budget: Rp<span id="total"></span></p>
 
-<div>Tersisa:
-<span id="remaining"></span>
-</div>
+<p>Terpakai: Rp<span id="used"></span></p>
 
-<div>Terpakai:
-<span id="used"></span>
-</div>
-
-</div>
-
-<div class="card">
-
-<canvas id="chart"></canvas>
+<p>Tersisa: Rp<span id="remaining"></span></p>
 
 </div>
 
 <div class="card">
 
-<h2>Detail List</h2>
+<canvas id="pie"></canvas>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<canvas id="bar"></canvas>
+
+</div>
+
+<div class="card">
+
+<h3>Detail List</h3>
 
 <table>
 
@@ -115,11 +132,11 @@ Last updated:
 <th>Serial</th>
 <th>Expired</th>
 <th>Sisa</th>
+<th>Status</th>
 </tr>
 </thead>
 
-<tbody id="table">
-</tbody>
+<tbody id="table"></tbody>
 
 </table>
 
@@ -127,23 +144,22 @@ Last updated:
 
 </div>
 
+</div>
+
 <script>
 
-const API =
-"https://dummyacountsubhan1.app.n8n.cloud/webhook/check-budget";
-
-const params =
-new URLSearchParams(
-window.location.search
-);
+const urlParams =
+new URLSearchParams(window.location.search);
 
 const fasus =
-params.get("fasus");
+urlParams.get("fasus");
 
 document.getElementById("title").innerText =
-fasus+" Dashboard";
+fasus + " Dashboard";
 
-fetch(API,{
+fetch(
+"https://dummyacountsubhan1.app.n8n.cloud/webhook/check-budget",
+{
 method:"POST",
 headers:{
 "Content-Type":"application/json"
@@ -151,50 +167,28 @@ headers:{
 body:JSON.stringify({
 fasus:fasus
 })
-})
+}
+)
 .then(res=>res.json())
 .then(data=>{
 
-if(!data.success) return;
+document.getElementById("loading").style.display="none";
 
-document.getElementById("lastUpdated").innerText =
-new Date(data.last_updated)
-.toLocaleString();
+document.getElementById("content").style.display="block";
 
 document.getElementById("total").innerText =
-data.summary.total_amount;
-
-document.getElementById("remaining").innerText =
-data.summary.total_remaining;
+data.summary.total_budget.toLocaleString();
 
 document.getElementById("used").innerText =
-data.summary.total_used;
+data.summary.total_used.toLocaleString();
 
-const tbody =
-document.getElementById("table");
+document.getElementById("remaining").innerText =
+data.summary.total_remaining.toLocaleString();
 
-data.details.forEach(row=>{
-
-tbody.innerHTML+=`
-<tr>
-<td>${row.pjb}</td>
-<td>${row.serial}</td>
-<td>${row.expired}</td>
-<td>${row.sisa}</td>
-</tr>
-`;
-
-});
-
-new Chart(
-document.getElementById("chart"),
-{
+new Chart(document.getElementById("pie"),{
 type:"pie",
 data:{
-labels:[
-"Used",
-"Remaining"
-],
+labels:["Used","Remaining"],
 datasets:[{
 data:[
 data.summary.total_used,
@@ -204,11 +198,41 @@ data.summary.total_remaining
 }
 });
 
+let done=0;
+let notyet=0;
+
+data.details.forEach(d=>{
+if(d.status==="DONE") done++;
+else notyet++;
 });
 
-function goBack(){
-window.location.href="index.html";
+new Chart(document.getElementById("bar"),{
+type:"bar",
+data:{
+labels:["DONE","NOT YET"],
+datasets:[{
+data:[done,notyet]
+}]
 }
+});
+
+const table =
+document.getElementById("table");
+
+data.details.forEach(d=>{
+
+table.innerHTML+=
+"<tr>"+
+"<td>"+d.pjb+"</td>"+
+"<td>"+d.serial+"</td>"+
+"<td>"+d.expired+"</td>"+
+"<td>"+d.sisa+"</td>"+
+"<td>"+d.status+"</td>"+
+"</tr>";
+
+});
+
+});
 
 </script>
 
