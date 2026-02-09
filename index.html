@@ -41,11 +41,13 @@ height:70px;
 font-size:48px;
 font-weight:bold;
 margin-bottom:30px;
+text-align:center;
 }
 
 .searchBox{
 display:flex;
 gap:10px;
+position:relative;
 }
 
 input{
@@ -73,22 +75,31 @@ background:#ffcc00;
 
 .suggest{
 position:absolute;
+top:60px;
 background:white;
 color:black;
 width:400px;
-margin-top:5px;
 border-radius:8px;
 overflow:hidden;
 z-index:999;
+max-height:250px;
+overflow-y:auto;
+box-shadow:0 5px 15px rgba(0,0,0,0.4);
 }
 
 .suggest div{
-padding:10px;
+padding:12px;
 cursor:pointer;
 }
 
 .suggest div:hover{
 background:#eee;
+}
+
+.loading{
+margin-top:10px;
+font-size:14px;
+color:#FFD100;
 }
 
 </style>
@@ -108,14 +119,25 @@ CEK BUDGET FASUS
 </div>
 
 <div class="searchBox">
+
 <div>
-<input id="input" placeholder="Ketik nama perusahaan..." autocomplete="off">
+
+<input id="input"
+placeholder="Ketik nama perusahaan..."
+autocomplete="off">
+
 <div id="suggest" class="suggest"></div>
+
+<div id="loading" class="loading">
+Loading data...
+</div>
+
 </div>
 
 <button onclick="checkFasus()">
 Check
 </button>
+
 </div>
 
 </div>
@@ -127,6 +149,47 @@ const sheetURL =
 
 let fasusList = [];
 
+function cleanText(text){
+
+return text
+.replace(/^"/,"")
+.replace(/"$/,"")
+.replace(/\r/g,"")
+.replace(/\n/g,"")
+.replace(/\t/g,"")
+.trim();
+
+}
+
+function parseCSVLine(line){
+
+const result = [];
+let current = "";
+let insideQuotes = false;
+
+for(let i=0;i<line.length;i++){
+
+const char = line[i];
+
+if(char === '"'){
+insideQuotes = !insideQuotes;
+}
+else if(char === "," && !insideQuotes){
+result.push(current);
+current="";
+}
+else{
+current+=char;
+}
+
+}
+
+result.push(current);
+
+return result;
+
+}
+
 fetch(sheetURL)
 .then(res=>res.text())
 .then(text=>{
@@ -135,12 +198,13 @@ const rows = text.split("\n");
 
 for(let i=1;i<rows.length;i++){
 
-const cols = rows[i].split(",");
+const cols = parseCSVLine(rows[i]);
 
-if(cols[0]){
-const name = cols[0].trim();
+if(cols.length > 0){
 
-if(name!=="" && !fasusList.includes(name)){
+const name = cleanText(cols[0]);
+
+if(name !== "" && !fasusList.includes(name)){
 fasusList.push(name);
 }
 
@@ -148,11 +212,20 @@ fasusList.push(name);
 
 }
 
-console.log("Loaded Fasus:", fasusList);
+fasusList.sort();
+
+console.log("Loaded fasus:", fasusList);
+
+document.getElementById("loading").style.display="none";
 
 })
 .catch(err=>{
-console.error("Failed load spreadsheet", err);
+
+console.error("Spreadsheet load error:", err);
+
+document.getElementById("loading").innerText =
+"Gagal load data";
+
 });
 
 const input =
@@ -175,7 +248,7 @@ fasusList.filter(f =>
 f.toLowerCase().includes(value)
 );
 
-filtered.slice(0,5).forEach(f=>{
+filtered.slice(0,8).forEach(f=>{
 
 const div =
 document.createElement("div");
@@ -183,8 +256,11 @@ document.createElement("div");
 div.innerText=f;
 
 div.onclick=function(){
+
 input.value=f;
+
 suggest.innerHTML="";
+
 };
 
 suggest.appendChild(div);
@@ -199,12 +275,17 @@ const fasus =
 input.value.trim();
 
 if(fasus===""){
-alert("Masukkan nama fasus");
+alert("Masukkan nama perusahaan");
+return;
+}
+
+if(!fasusList.includes(fasus)){
+alert("Perusahaan tidak ditemukan");
 return;
 }
 
 window.location.href =
-"fasus.html?fasus="+
+"fasus.html?fasus=" +
 encodeURIComponent(fasus);
 
 }
