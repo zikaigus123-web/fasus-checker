@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -11,96 +13,113 @@
 body{
 margin:0;
 font-family:Arial;
-background:url('background.jpg') center/cover no-repeat;
 height:100vh;
 display:flex;
 justify-content:center;
 align-items:center;
 color:white;
+overflow:hidden;
+}
+
+/* BACKGROUND */
+
+.background{
+position:fixed;
+width:100%;
+height:100%;
+background:url("background.jpg") center/cover no-repeat;
+z-index:-2;
 }
 
 .overlay{
 position:fixed;
 width:100%;
 height:100%;
-background:rgba(0,0,0,0.7);
+background:rgba(0,0,0,0.65);
+z-index:-1;
 }
 
+/* LOGO */
+
+.logo-top{
+position:fixed;
+top:20px;
+right:30px;
+height:60px;
+}
+
+.logo-bottom{
+position:fixed;
+bottom:25px;
+left:50%;
+transform:translateX(-50%);
+height:70px;
+}
+
+/* SEARCH BOX */
+
 .container{
-position:relative;
-z-index:2;
 text-align:center;
 }
 
 .title{
 font-size:48px;
 font-weight:bold;
-margin-bottom:20px;
+margin-bottom:25px;
 }
 
 input{
-width:420px;
-padding:15px;
+padding:14px;
 font-size:18px;
-border-radius:8px;
+width:320px;
 border:none;
-outline:none;
+border-radius:6px;
 }
 
 button{
-margin-top:15px;
-padding:12px 35px;
+padding:14px 24px;
 font-size:18px;
-font-weight:bold;
 background:#FFD100;
 border:none;
-border-radius:8px;
+border-radius:6px;
 cursor:pointer;
+font-weight:bold;
+margin-left:10px;
 }
 
 button:hover{
 background:#e6bc00;
 }
 
-.suggestions{
-background:white;
-color:black;
-margin-top:5px;
-border-radius:8px;
-max-height:250px;
-overflow-y:auto;
+/* SPINNER */
+
+.spinner{
 display:none;
+margin-top:20px;
 }
 
-.item{
-padding:12px;
-cursor:pointer;
+.loader{
+border:6px solid #333;
+border-top:6px solid #FFD100;
+border-radius:50%;
+width:40px;
+height:40px;
+animation:spin 1s linear infinite;
+margin:auto;
 }
 
-.item:hover{
-background:#eee;
-}
-
-.logo-top{
-position:fixed;
-top:20px;
-right:20px;
-width:130px;
-}
-
-.logo-bottom{
-position:fixed;
-bottom:20px;
-left:50%;
-transform:translateX(-50%);
-width:180px;
+@keyframes spin{
+0%{transform:rotate(0deg);}
+100%{transform:rotate(360deg);}
 }
 
 </style>
+
 </head>
 
 <body>
 
+<div class="background"></div>
 <div class="overlay"></div>
 
 <img src="logo-ut.png" class="logo-top">
@@ -108,88 +127,50 @@ width:180px;
 
 <div class="container">
 
-<div class="title">CEK BUDGET FASUS</div>
+<div class="title">
+CEK BUDGET FASUS
+</div>
 
-<input id="input"
+<input
+id="fasusInput"
 placeholder="Masukkan nama fasus"
-oninput="suggest()">
+onkeypress="if(event.key==='Enter') openDashboard()"
+>
 
-<div id="suggestions" class="suggestions"></div>
+<button onclick="openDashboard()">
+Check
+</button>
 
-<br>
-
-<button onclick="goDashboard()">Check</button>
+<div class="spinner" id="spinner">
+<div class="loader"></div>
+</div>
 
 </div>
 
 <script>
 
-const SUGGEST_URL =
-"https://dummyacountsubhan1.app.n8n.cloud/webhook/fasus-suggest";
-
-function goDashboard(){
+function openDashboard(){
 
 const fasus =
-document.getElementById("input").value;
+document.getElementById("fasusInput").value.trim();
 
-if(!fasus) return;
+if(!fasus){
+
+alert("Masukkan nama fasus");
+
+return;
+
+}
+
+document.getElementById("spinner").style.display="block";
+
+setTimeout(()=>{
 
 window.location.href =
-"fasus-dashboard.html?fasus="+
+"fasus-dashboard.html?fasus=" +
 encodeURIComponent(fasus);
 
-}
-
-async function suggest(){
-
-const query =
-document.getElementById("input").value;
-
-const box =
-document.getElementById("suggestions");
-
-if(query.length<1){
-box.style.display="none";
-return;
-}
-
-const res =
-await fetch(SUGGEST_URL,{
-method:"POST",
-headers:{
-"Content-Type":"application/json"
-},
-body:JSON.stringify({query})
-});
-
-const data =
-await res.json();
-
-box.innerHTML="";
-
-if(data.suggestions){
-
-data.suggestions.forEach(name=>{
-
-const div=document.createElement("div");
-
-div.className="item";
-
-div.innerText=name;
-
-div.onclick=()=>{
-window.location.href=
-"fasus-dashboard.html?fasus="+
-encodeURIComponent(name);
-};
-
-box.appendChild(div);
-
-});
-
-box.style.display="block";
-
-}
+},600);
 
 }
 
