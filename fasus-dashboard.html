@@ -107,6 +107,21 @@ color:red;
 font-weight:bold;
 }
 
+.time-active{
+color:green;
+font-weight:bold;
+}
+
+.time-near{
+color:#e6a700;
+font-weight:bold;
+}
+
+.time-expired{
+color:red;
+font-weight:bold;
+}
+
 </style>
 </head>
 
@@ -162,6 +177,7 @@ font-weight:bold;
 <th>Expired Date</th>
 <th>Sisa Budget</th>
 <th>Status</th>
+<th>Status Waktu</th>
 </tr>
 </thead>
 
@@ -176,21 +192,15 @@ font-weight:bold;
 const CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vTbJYRkPPTPDYHrDTy-eA_e5rUZ_VowdvBDjHU0BD7rKTvHIZfZAQf_ctl8qDkpiGYVnr9qARdX4fZ6/pub?gid=1924167205&single=true&output=csv";
 
 function formatRupiah(num){
-
 return "Rp " + num.toLocaleString("id-ID");
-
 }
 
 function getCompany(){
-
 const params=new URLSearchParams(window.location.search);
-
 return params.get("company");
-
 }
 
 function parseNumber(str){
-
 if(!str) return 0;
 
 return parseFloat(
@@ -200,7 +210,13 @@ str.toString()
 .replace(/,/g,"")
 .trim()
 )||0;
+}
 
+function getTimeClass(status){
+if(status==="ACTIVE") return "time-active";
+if(status==="NEAR EXPIRED") return "time-near";
+if(status==="EXPIRED") return "time-expired";
+return "";
 }
 
 fetch(CSV_URL)
@@ -247,10 +263,10 @@ const used=parseNumber(cols[7]);
 
 const remain=parseNumber(cols[8]);
 
+const statusWaktu=cols[9]?.trim();
+
 totalPJB+=amountPJB;
-
 totalUsed+=used;
-
 totalRemain+=remain;
 
 if(status==="DONE") doneCount++;
@@ -264,6 +280,7 @@ tr.innerHTML=`
 <td>${expired}</td>
 <td>${formatRupiah(remain)}</td>
 <td class="${status==="DONE"?"status-done":"status-notyet"}">${status}</td>
+<td class="${getTimeClass(statusWaktu)}">${statusWaktu}</td>
 `;
 
 body.appendChild(tr);
@@ -271,30 +288,21 @@ body.appendChild(tr);
 });
 
 document.getElementById("totalPJB").innerText=formatRupiah(totalPJB);
-
 document.getElementById("totalUsed").innerText=formatRupiah(totalUsed);
-
 document.getElementById("totalRemain").innerText=formatRupiah(totalRemain);
 
-
 new Chart(document.getElementById("pieChart"),{
-
 type:"pie",
-
 data:{
 labels:["Terpakai","Tersisa"],
 datasets:[{
 data:[totalUsed,totalRemain]
 }]
 }
-
 });
 
-
 new Chart(document.getElementById("barChart"),{
-
 type:"bar",
-
 data:{
 labels:["DONE","NOT YET"],
 datasets:[{
@@ -303,9 +311,7 @@ data:[doneCount,notyetCount],
 backgroundColor:["green","red"]
 }]
 }
-
 });
-
 
 });
 
