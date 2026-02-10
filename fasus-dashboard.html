@@ -6,7 +6,6 @@
 
 <title>Fasus Budget Dashboard</title>
 
-<!-- FAVICON LOGO BROWSER -->
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
 
@@ -150,10 +149,6 @@ border-radius:6px;
 background-color:#fff3cd;
 }
 
-.hidden{
-display:none;
-}
-
 </style>
 </head>
 
@@ -241,6 +236,10 @@ onkeyup="searchTable()"
 
 const CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vTbJYRkPPTPDYHrDTy-eA_e5rUZ_VowdvBDjHU0BD7rKTvHIZfZAQf_ctl8qDkpiGYVnr9qARdX4fZ6/pub?gid=1924167205&single=true&output=csv";
 
+let pieChartInstance;
+let barChartInstance;
+let timeChartInstance;
+
 function formatRupiah(num){
 return "Rp " + num.toLocaleString("id-ID");
 }
@@ -251,9 +250,7 @@ return params.get("company");
 }
 
 function parseNumber(str){
-
 if(!str) return 0;
-
 return parseFloat(
 str.toString()
 .replace(/Rp/g,"")
@@ -261,23 +258,18 @@ str.toString()
 .replace(/,/g,"")
 .trim()
 )||0;
-
 }
 
 function getTimeClass(status){
-
 if(status==="ACTIVE") return "time-active";
 if(status==="NEAR EXPIRED") return "time-near";
 if(status==="EXPIRED") return "time-expired";
-
 return "";
-
 }
 
 function searchTable(){
 
 const input=document.getElementById("searchInput").value.toLowerCase();
-
 const rows=document.querySelectorAll("#tableBody tr");
 
 rows.forEach(row=>{
@@ -287,26 +279,22 @@ const serial=row.getAttribute("data-serial");
 
 row.classList.remove("highlight");
 
-if(
-pjb.includes(input) ||
-serial.includes(input)
-){
+if(pjb.includes(input) || serial.includes(input)){
 
 row.style.display="";
-if(input!==""){
-row.classList.add("highlight");
-}
+if(input!=="") row.classList.add("highlight");
 
-}
-else{
+}else{
 
 row.style.display="none";
 
 }
 
 });
-
 }
+
+
+function loadDashboard(){
 
 fetch(CSV_URL)
 .then(res=>res.text())
@@ -333,13 +321,13 @@ let nearCount=0;
 let expiredCount=0;
 
 const body=document.getElementById("tableBody");
+body.innerHTML="";
 
 rows.forEach(row=>{
 
 const cols=row.split(",");
 
 const pemilik=cols[0]?.trim();
-
 if(pemilik!==company) return;
 
 const expired=cols[2]?.trim();
@@ -380,81 +368,55 @@ body.appendChild(tr);
 
 });
 
+
 document.getElementById("totalPJB").innerText=formatRupiah(totalPJB);
 document.getElementById("totalUsed").innerText=formatRupiah(totalUsed);
 document.getElementById("totalRemain").innerText=formatRupiah(totalRemain);
 
-new Chart(document.getElementById("pieChart"),{
 
+if(pieChartInstance) pieChartInstance.destroy();
+pieChartInstance=new Chart(document.getElementById("pieChart"),{
 type:"pie",
-
 data:{
 labels:["Terpakai","Tersisa"],
-datasets:[{
-data:[totalUsed,totalRemain]
-}]
+datasets:[{data:[totalUsed,totalRemain]}]
 },
-
-options:{
-responsive:true,
-maintainAspectRatio:false
-}
-
+options:{responsive:true,maintainAspectRatio:false}
 });
 
-new Chart(document.getElementById("barChart"),{
 
+if(barChartInstance) barChartInstance.destroy();
+barChartInstance=new Chart(document.getElementById("barChart"),{
 type:"bar",
-
 data:{
 labels:["DONE","NOT YET"],
-datasets:[{
-label:"Jumlah",
-data:[doneCount,notyetCount],
-backgroundColor:["green","red"]
-}]
+datasets:[{label:"Jumlah",data:[doneCount,notyetCount],backgroundColor:["green","red"]}]
 },
-
-options:{
-responsive:true,
-maintainAspectRatio:false
-}
-
+options:{responsive:true,maintainAspectRatio:false}
 });
 
-new Chart(document.getElementById("timeChart"),{
 
+if(timeChartInstance) timeChartInstance.destroy();
+timeChartInstance=new Chart(document.getElementById("timeChart"),{
 type:"pie",
-
 data:{
 labels:["ACTIVE","NEAR EXPIRED","EXPIRED"],
-datasets:[{
-data:[activeCount,nearCount,expiredCount],
-backgroundColor:[
-"green",
-"#e6a700",
-"red"
-]
-}]
+datasets:[{data:[activeCount,nearCount,expiredCount],backgroundColor:["green","#e6a700","red"]}]
 },
+options:{responsive:true,maintainAspectRatio:false}
+});
 
-options:{
-responsive:true,
-maintainAspectRatio:false
+});
 }
 
-});
 
-});
+/* LOAD PERTAMA */
+loadDashboard();
 
-
-/* AUTO REFRESH SETIAP 30 DETIK TANPA MERUBAH CODE LAIN */
+/* AUTO REFRESH TANPA RELOAD PAGE */
 setInterval(function(){
-
-location.reload();
-
+loadDashboard();
 },30000);
-
 
 </script>
 
