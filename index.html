@@ -9,121 +9,106 @@
 
 <style>
 
-/* reset */
 body{
-    margin:0;
-    font-family:Arial, sans-serif;
-    background:url("background.jpg") no-repeat center center fixed;
-    background-size:cover;
+margin:0;
+font-family:Arial,sans-serif;
+background:url("background.jpg") no-repeat center center fixed;
+background-size:cover;
 }
 
-/* overlay gelap */
 .overlay{
-    position:relative;
-    width:100%;
-    height:100vh;
-    background:rgba(0,0,0,0.55);
+position:relative;
+width:100%;
+height:100vh;
+background:rgba(0,0,0,0.55);
 }
 
-/* logo ut school kanan atas */
 .logo-ut{
-    position:absolute;
-    top:20px;
-    right:80px;
-    height:40px;
-    z-index:10;
+position:absolute;
+top:20px;
+right:80px;
+height:40px;
+z-index:10;
 }
 
-/* logo insani bawah tengah */
 .logo-insani{
-    position:absolute;
-    bottom:20px;
-    left:50%;
-    transform:translateX(-50%);
-    height:45px;
-    z-index:10;
+position:absolute;
+bottom:20px;
+left:50%;
+transform:translateX(-50%);
+height:45px;
+z-index:10;
 }
 
-/* container tengah */
 .center-container{
-    position:absolute;
-    top:50%;
-    left:50%;
-    transform:translate(-50%,-50%);
-    text-align:center;
-    color:white;
+position:absolute;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+text-align:center;
+color:white;
 }
 
-/* judul */
 .title{
-    font-size:48px;
-    font-weight:bold;
-    margin-bottom:25px;
-    letter-spacing:1px;
+font-size:48px;
+font-weight:bold;
+margin-bottom:25px;
 }
 
-/* search wrapper */
 .search-wrapper{
-    display:flex;
-    justify-content:center;
-    align-items:flex-start;
-    gap:10px;
+display:flex;
+justify-content:center;
+gap:10px;
 }
 
-/* search box parent */
 .search-box{
-    position:relative;
+position:relative;
 }
 
-/* input */
 #searchInput{
-    width:320px;
-    padding:12px;
-    font-size:16px;
-    border-radius:4px;
-    border:none;
-    outline:none;
+width:320px;
+padding:12px;
+font-size:16px;
+border-radius:4px;
+border:none;
+outline:none;
 }
 
-/* button */
 button{
-    padding:12px 22px;
-    font-size:16px;
-    font-weight:bold;
-    background:#ffc107;
-    color:black;
-    border:none;
-    border-radius:4px;
-    cursor:pointer;
+padding:12px 22px;
+font-size:16px;
+font-weight:bold;
+background:#ffc107;
+border:none;
+border-radius:4px;
+cursor:pointer;
 }
 
 button:hover{
-    background:#e0a800;
+background:#e0a800;
 }
 
-/* suggestion dropdown */
 .suggestions{
-    position:absolute;
-    top:46px;
-    left:0;
-    width:100%;
-    background:white;
-    color:black;
-    border-radius:4px;
-    max-height:200px;
-    overflow-y:auto;
-    z-index:999;
-    box-shadow:0 4px 10px rgba(0,0,0,0.3);
+position:absolute;
+top:46px;
+left:0;
+width:100%;
+background:white;
+color:black;
+border-radius:4px;
+max-height:200px;
+overflow-y:auto;
+z-index:9999;
+box-shadow:0 4px 10px rgba(0,0,0,0.3);
 }
 
-/* suggestion item */
 .suggestion-item{
-    padding:10px;
-    cursor:pointer;
+padding:10px;
+cursor:pointer;
 }
 
 .suggestion-item:hover{
-    background:#f1f1f1;
+background:#eee;
 }
 
 </style>
@@ -133,15 +118,11 @@ button:hover{
 
 <div class="overlay">
 
-<!-- logo ut school -->
 <img src="logo-ut.png" class="logo-ut">
 
-<!-- konten tengah -->
 <div class="center-container">
 
-<div class="title">
-CEK BUDGET FASUS
-</div>
+<div class="title">CEK BUDGET FASUS</div>
 
 <div class="search-wrapper">
 
@@ -150,7 +131,7 @@ CEK BUDGET FASUS
 <input
 type="text"
 id="searchInput"
-placeholder="Masukkan nama fasus"
+placeholder="Masukkan nama perusahaan"
 autocomplete="off"
 >
 
@@ -164,61 +145,64 @@ autocomplete="off"
 
 </div>
 
-<!-- logo insani -->
 <img src="logo-insan.png" class="logo-insani">
 
 </div>
 
 <script>
 
-/* GANTI DENGAN LINK CSV GOOGLE SHEET */
-const CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vTbJYRkPPTPDYHrDTy-eA_e5rUZ_VowdvBDjHU0BD7rKTvHIZfZAQf_ctl8qDkpiGYVnr9qARdX4fZ6/pub?output=csv";
-
-/* contoh format:
-https://docs.google.com/spreadsheets/d/e/XXXX/pub?output=csv
-*/
+const CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vTbJYRkPPTPDYHrDTy-eA_e5rUZ_VowdvBDjHU0BD7rKTvHIZfZAQf_ctl8qDkpiGYVnr9qARdX4fZ6/pubhtml?gid=1748464450&single=true";
 
 let companies=[];
 
 const input=document.getElementById("searchInput");
 const suggestionBox=document.getElementById("suggestions");
 
-/* ambil data CSV */
+/* CSV parser aman */
+function parseCSV(text){
+
+const lines=text.split("\n");
+
+const result=[];
+
+for(let line of lines){
+
+if(line.trim()==="") continue;
+
+const firstColumn=line.split(/,(.+)/)[0];
+
+result.push(firstColumn.trim());
+
+}
+
+return result;
+
+}
+
+/* load data */
 fetch(CSV_URL)
-.then(response=>response.text())
+.then(res=>res.text())
 .then(text=>{
 
-const rows=text.split("\n");
+const parsed=parseCSV(text);
 
-const set=new Set();
+const unique=new Set(parsed.slice(1));
 
-for(let i=1;i<rows.length;i++){
-
-const cols=rows[i].split(",");
-
-const company=cols[0];
-
-if(company && company.trim()!==""){
-set.add(company.trim());
-}
-
-}
-
-companies=Array.from(set).sort();
+companies=Array.from(unique).sort();
 
 });
 
-/* auto suggestion */
+/* suggestion */
 input.addEventListener("input",function(){
 
 const value=this.value.toLowerCase();
 
 suggestionBox.innerHTML="";
 
-if(value==="") return;
+if(!value) return;
 
-const filtered=companies.filter(company=>
-company.toLowerCase().includes(value)
+const filtered=companies.filter(c=>
+c.toLowerCase().includes(value)
 );
 
 filtered.forEach(company=>{
@@ -243,12 +227,12 @@ suggestionBox.appendChild(div);
 
 });
 
-/* redirect ke dashboard */
+/* redirect */
 function checkCompany(){
 
 const company=input.value.trim();
 
-if(company===""){
+if(!company){
 
 alert("Masukkan nama perusahaan");
 
@@ -261,7 +245,7 @@ window.location.href=
 
 }
 
-/* klik luar untuk tutup suggestion */
+/* klik luar */
 document.addEventListener("click",function(e){
 
 if(!e.target.closest(".search-box")){
