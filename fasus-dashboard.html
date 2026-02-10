@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Fasus Dashboard</title>
+<title>Fasus Budget Dashboard</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -13,7 +13,7 @@
 
 body{
 margin:0;
-font-family:Arial;
+font-family:Arial,sans-serif;
 background:#f4f6f9;
 }
 
@@ -35,7 +35,7 @@ padding:30px;
 }
 
 .company{
-font-size:26px;
+font-size:28px;
 font-weight:bold;
 margin-bottom:5px;
 }
@@ -65,7 +65,7 @@ margin-bottom:10px;
 }
 
 .card-value{
-font-size:24px;
+font-size:26px;
 font-weight:bold;
 }
 
@@ -132,17 +132,17 @@ font-weight:bold;
 
 <div class="card">
 <div class="card-title">Total Budget</div>
-<div id="totalBudget" class="card-value">0</div>
+<div id="totalBudget" class="card-value">Rp 0</div>
 </div>
 
 <div class="card">
 <div class="card-title">Total Terpakai</div>
-<div id="totalUsed" class="card-value">0</div>
+<div id="totalUsed" class="card-value">Rp 0</div>
 </div>
 
 <div class="card">
 <div class="card-title">Total Tersisa</div>
-<div id="totalRemaining" class="card-value">0</div>
+<div id="totalRemaining" class="card-value">Rp 0</div>
 </div>
 
 </div>
@@ -188,8 +188,29 @@ const company=params.get("company");
 document.getElementById("companyName").textContent=company;
 
 document.getElementById("lastUpdated").textContent=
-"Last updated: "+new Date().toLocaleString();
+"Last updated: "+new Date().toLocaleString("id-ID");
 
+/* FORMAT RUPIAH */
+function formatRupiah(number){
+
+return new Intl.NumberFormat("id-ID",{
+style:"currency",
+currency:"IDR",
+minimumFractionDigits:0
+}).format(number);
+
+}
+
+/* BERSIHKAN ANGKA CSV */
+function cleanNumber(value){
+
+if(!value) return 0;
+
+return parseFloat(value.replace(/[^\d]/g,""))||0;
+
+}
+
+/* PARSE CSV */
 function parseCSV(text){
 
 const lines=text.split("\n");
@@ -206,12 +227,12 @@ data.push({
 
 company:cols[0].trim(),
 expired:cols[1].trim(),
-budget:parseFloat(cols[2])||0,
+budget:cleanNumber(cols[2]),
 status:cols[3].trim(),
 pjb:cols[4].trim(),
 sn:cols[5].trim(),
-used:parseFloat(cols[6])||0,
-remaining:parseFloat(cols[7])||0
+used:cleanNumber(cols[6]),
+remaining:cleanNumber(cols[7])
 
 });
 
@@ -221,6 +242,7 @@ return data;
 
 }
 
+/* LOAD DATA */
 fetch(CSV_URL)
 .then(res=>res.text())
 .then(text=>{
@@ -256,7 +278,7 @@ row.innerHTML=`
 <td>${item.pjb}</td>
 <td>${item.sn}</td>
 <td>${item.expired}</td>
-<td>${item.remaining.toLocaleString()}</td>
+<td>${formatRupiah(item.remaining)}</td>
 <td class="${item.status==="DONE"?"done":"notyet"}">${item.status}</td>
 `;
 
@@ -264,19 +286,22 @@ tbody.appendChild(row);
 
 });
 
+/* UPDATE SUMMARY */
 document.getElementById("totalBudget").textContent=
-totalBudget.toLocaleString();
+formatRupiah(totalBudget);
 
 document.getElementById("totalUsed").textContent=
-totalUsed.toLocaleString();
+formatRupiah(totalUsed);
 
 document.getElementById("totalRemaining").textContent=
-totalRemaining.toLocaleString();
+formatRupiah(totalRemaining);
 
+/* CREATE CHART */
 createCharts(totalUsed,totalRemaining,doneCount,notYetCount);
 
 });
 
+/* CHART */
 function createCharts(used,remaining,doneCount,notYetCount){
 
 new Chart(document.getElementById("pieChart"),{
@@ -300,6 +325,7 @@ type:"bar",
 data:{
 labels:["DONE","NOT YET"],
 datasets:[{
+label:"Jumlah",
 data:[doneCount,notYetCount],
 backgroundColor:["green","red"]
 }]
