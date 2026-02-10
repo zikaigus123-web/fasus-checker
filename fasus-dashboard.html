@@ -131,17 +131,17 @@ font-weight:bold;
 <div class="summary">
 
 <div class="card">
-<div class="card-title">Total Budget</div>
+<div class="card-title">Total Amount PJB</div>
 <div id="totalBudget" class="card-value">Rp 0</div>
 </div>
 
 <div class="card">
-<div class="card-title">Total Terpakai</div>
+<div class="card-title">Total Amount Terpakai</div>
 <div id="totalUsed" class="card-value">Rp 0</div>
 </div>
 
 <div class="card">
-<div class="card-title">Total Tersisa</div>
+<div class="card-title">Total Amount Sisa Budget PJB</div>
 <div id="totalRemaining" class="card-value">Rp 0</div>
 </div>
 
@@ -190,7 +190,6 @@ document.getElementById("companyName").textContent=company;
 document.getElementById("lastUpdated").textContent=
 "Last updated: "+new Date().toLocaleString("id-ID");
 
-/* FORMAT RUPIAH */
 function formatRupiah(number){
 
 return new Intl.NumberFormat("id-ID",{
@@ -201,16 +200,23 @@ minimumFractionDigits:0
 
 }
 
-/* BERSIHKAN ANGKA CSV */
-function cleanNumber(value){
+/* FIX PARSER ANGKA BENAR */
+function parseNumber(value){
 
 if(!value) return 0;
 
-return parseFloat(value.replace(/[^\d]/g,""))||0;
+value=value.replace(/"/g,"").trim();
+
+if(value.includes(",")){
+
+value=value.replace(/,/g,"");
 
 }
 
-/* PARSE CSV */
+return Number(value)||0;
+
+}
+
 function parseCSV(text){
 
 const lines=text.split("\n");
@@ -227,12 +233,12 @@ data.push({
 
 company:cols[0].trim(),
 expired:cols[1].trim(),
-budget:cleanNumber(cols[2]),
+budget:parseNumber(cols[2]),
 status:cols[3].trim(),
 pjb:cols[4].trim(),
 sn:cols[5].trim(),
-used:cleanNumber(cols[6]),
-remaining:cleanNumber(cols[7])
+used:parseNumber(cols[6]),
+remaining:parseNumber(cols[7])
 
 });
 
@@ -242,7 +248,6 @@ return data;
 
 }
 
-/* LOAD DATA */
 fetch(CSV_URL)
 .then(res=>res.text())
 .then(text=>{
@@ -266,11 +271,8 @@ totalBudget+=item.budget;
 totalUsed+=item.used;
 totalRemaining+=item.remaining;
 
-if(item.status==="DONE"){
-doneCount++;
-}else{
-notYetCount++;
-}
+if(item.status==="DONE") doneCount++;
+else notYetCount++;
 
 const row=document.createElement("tr");
 
@@ -286,7 +288,6 @@ tbody.appendChild(row);
 
 });
 
-/* UPDATE SUMMARY */
 document.getElementById("totalBudget").textContent=
 formatRupiah(totalBudget);
 
@@ -296,12 +297,10 @@ formatRupiah(totalUsed);
 document.getElementById("totalRemaining").textContent=
 formatRupiah(totalRemaining);
 
-/* CREATE CHART */
 createCharts(totalUsed,totalRemaining,doneCount,notYetCount);
 
 });
 
-/* CHART */
 function createCharts(used,remaining,doneCount,notYetCount){
 
 new Chart(document.getElementById("pieChart"),{
