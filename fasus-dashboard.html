@@ -71,6 +71,7 @@ margin-top:5px;
 display:flex;
 gap:20px;
 margin-bottom:30px;
+flex-wrap:wrap;
 }
 
 .chart-box{
@@ -78,6 +79,9 @@ background:white;
 padding:20px;
 border-radius:8px;
 flex:1;
+height:350px;
+max-height:350px;
+position:relative;
 }
 
 table{
@@ -168,10 +172,9 @@ font-weight:bold;
 
 </div>
 
-<!-- PIE STATUS WAKTU BARU -->
 <div class="charts">
 
-<div class="chart-box">
+<div class="chart-box" style="height:300px; max-width:400px; margin:auto;">
 <canvas id="timeChart"></canvas>
 </div>
 
@@ -210,6 +213,7 @@ return params.get("company");
 }
 
 function parseNumber(str){
+
 if(!str) return 0;
 
 return parseFloat(
@@ -219,13 +223,17 @@ str.toString()
 .replace(/,/g,"")
 .trim()
 )||0;
+
 }
 
 function getTimeClass(status){
+
 if(status==="ACTIVE") return "time-active";
 if(status==="NEAR EXPIRED") return "time-near";
 if(status==="EXPIRED") return "time-expired";
+
 return "";
+
 }
 
 fetch(CSV_URL)
@@ -248,7 +256,6 @@ let totalRemain=0;
 let doneCount=0;
 let notyetCount=0;
 
-/* COUNTER STATUS WAKTU BARU */
 let activeCount=0;
 let nearCount=0;
 let expiredCount=0;
@@ -302,20 +309,28 @@ document.getElementById("totalPJB").innerText=formatRupiah(totalPJB);
 document.getElementById("totalUsed").innerText=formatRupiah(totalUsed);
 document.getElementById("totalRemain").innerText=formatRupiah(totalRemain);
 
-/* PIE TERPAKAI */
 new Chart(document.getElementById("pieChart"),{
+
 type:"pie",
+
 data:{
 labels:["Terpakai","Tersisa"],
 datasets:[{
 data:[totalUsed,totalRemain]
 }]
+},
+
+options:{
+responsive:true,
+maintainAspectRatio:false
 }
+
 });
 
-/* BAR STATUS */
 new Chart(document.getElementById("barChart"),{
+
 type:"bar",
+
 data:{
 labels:["DONE","NOT YET"],
 datasets:[{
@@ -323,10 +338,15 @@ label:"Jumlah",
 data:[doneCount,notyetCount],
 backgroundColor:["green","red"]
 }]
+},
+
+options:{
+responsive:true,
+maintainAspectRatio:false
 }
+
 });
 
-/* PIE STATUS WAKTU BARU */
 new Chart(document.getElementById("timeChart"),{
 
 type:"pie",
@@ -341,6 +361,11 @@ backgroundColor:[
 "red"
 ]
 }]
+},
+
+options:{
+responsive:true,
+maintainAspectRatio:false
 }
 
 });
