@@ -3,28 +3,110 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Fasus Budget Dashboard</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-body{margin:0;font-family:Arial,sans-serif;background:#f4f6f9}
-.header{background:#1a1a1a;color:#fff;padding:15px 30px;display:flex;justify-content:space-between;align-items:center}
-.logo{height:35px}
-.container{padding:30px}
-.company{font-size:28px;font-weight:bold}
-.updated{color:#666;margin-bottom:25px}
-.summary{display:flex;gap:20px;margin-bottom:30px}
-.card{background:#fff;padding:20px;border-radius:8px;flex:1;box-shadow:0 2px 6px rgba(0,0,0,.1)}
-.card-title{color:#666}
-.card-value{font-size:26px;font-weight:bold}
-.charts{display:flex;gap:30px;margin-bottom:30px}
-.chart-box{background:#fff;padding:20px;border-radius:8px;flex:1;box-shadow:0 2px 6px rgba(0,0,0,.1)}
-table{width:100%;border-collapse:collapse;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.1)}
-th,td{padding:12px;border-bottom:1px solid #ddd;text-align:left}
-th{background:#f8f8f8}
-.done{color:green;font-weight:bold}
-.notyet{color:red;font-weight:bold}
+
+body{
+font-family:Arial;
+margin:0;
+background:#f4f6f8;
+}
+
+.header{
+background:#111;
+color:white;
+padding:15px 30px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+.logo{
+height:40px;
+}
+
+.container{
+padding:30px;
+}
+
+.company{
+font-size:32px;
+font-weight:bold;
+}
+
+.updated{
+color:#666;
+margin-bottom:20px;
+}
+
+.cards{
+display:flex;
+gap:20px;
+margin-bottom:25px;
+}
+
+.card{
+background:white;
+padding:20px;
+border-radius:8px;
+flex:1;
+box-shadow:0 2px 6px rgba(0,0,0,0.1);
+}
+
+.card-title{
+color:#666;
+}
+
+.card-value{
+font-size:28px;
+font-weight:bold;
+margin-top:5px;
+}
+
+.charts{
+display:flex;
+gap:20px;
+margin-bottom:30px;
+}
+
+.chart-box{
+background:white;
+padding:20px;
+border-radius:8px;
+flex:1;
+}
+
+table{
+width:100%;
+background:white;
+border-collapse:collapse;
+}
+
+th{
+background:#eee;
+padding:12px;
+text-align:left;
+}
+
+td{
+padding:10px;
+border-top:1px solid #ddd;
+}
+
+.status-done{
+color:green;
+font-weight:bold;
+}
+
+.status-notyet{
+color:red;
+font-weight:bold;
+}
+
 </style>
 </head>
 
@@ -37,21 +119,42 @@ th{background:#f8f8f8}
 
 <div class="container">
 
-<div id="companyName" class="company"></div>
-<div id="lastUpdated" class="updated"></div>
+<div class="company" id="companyName"></div>
+<div class="updated" id="updated"></div>
 
-<div class="summary">
-<div class="card"><div class="card-title">Total Amount PJB</div><div id="totalPJB" class="card-value">Rp 0</div></div>
-<div class="card"><div class="card-title">Total Amount Terpakai</div><div id="totalUsed" class="card-value">Rp 0</div></div>
-<div class="card"><div class="card-title">Total Amount Sisa Budget PJB</div><div id="totalRemain" class="card-value">Rp 0</div></div>
+<div class="cards">
+
+<div class="card">
+<div class="card-title">Total Amount PJB</div>
+<div class="card-value" id="totalPJB">Rp 0</div>
+</div>
+
+<div class="card">
+<div class="card-title">Total Amount Terpakai</div>
+<div class="card-value" id="totalUsed">Rp 0</div>
+</div>
+
+<div class="card">
+<div class="card-title">Total Amount Sisa Budget PJB</div>
+<div class="card-value" id="totalRemain">Rp 0</div>
+</div>
+
 </div>
 
 <div class="charts">
-<div class="chart-box"><canvas id="pieChart"></canvas></div>
-<div class="chart-box"><canvas id="barChart"></canvas></div>
+
+<div class="chart-box">
+<canvas id="pieChart"></canvas>
+</div>
+
+<div class="chart-box">
+<canvas id="barChart"></canvas>
+</div>
+
 </div>
 
 <table>
+
 <thead>
 <tr>
 <th>PJB</th>
@@ -61,86 +164,151 @@ th{background:#f8f8f8}
 <th>Status</th>
 </tr>
 </thead>
+
 <tbody id="tableBody"></tbody>
+
 </table>
 
 </div>
 
 <script>
-const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTbJYRkPPTPDYHrDTy-eA_e5rUZ_VowdvBDjHU0BD7rKTvHIZfZAQf_ctl8qDkpiGYVnr9qARdX4fZ6/pub?gid=1924167205&single=true&output=csv";
-const company = new URLSearchParams(location.search).get("company");
 
-document.getElementById("companyName").textContent = company;
-document.getElementById("lastUpdated").textContent =
-"Last updated: " + new Date().toLocaleString("id-ID");
+const CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vTbJYRkPPTPDYHrDTy-eA_e5rUZ_VowdvBDjHU0BD7rKTvHIZfZAQf_ctl8qDkpiGYVnr9qARdX4fZ6/pub?gid=1924167205&single=true&output=csv";
 
-function rupiah(v){
-return new Intl.NumberFormat("id-ID",{style:"currency",currency:"IDR",minimumFractionDigits:0}).format(v);
+function formatRupiah(num){
+
+return "Rp " + num.toLocaleString("id-ID");
+
 }
 
-function parseNumber(v){
-if(!v) return 0;
-return Number(v.replace(/[^0-9]/g,"")) || 0;
+function getCompany(){
+
+const params=new URLSearchParams(window.location.search);
+
+return params.get("company");
+
 }
 
-/* CSV PARSER YANG BENAR */
-function parseCSV(text){
-const rows = [];
-let current = [], value = "", inQuotes = false;
+function parseNumber(str){
 
-for(let i=0;i<text.length;i++){
-const c = text[i], n = text[i+1];
-if(c === '"' && inQuotes && n === '"'){ value += '"'; i++; }
-else if(c === '"'){ inQuotes = !inQuotes; }
-else if(c === "," && !inQuotes){ current.push(value); value=""; }
-else if(c === "\n" && !inQuotes){ current.push(value); rows.push(current); current=[]; value=""; }
-else value += c;
-}
-current.push(value);
-rows.push(current);
-return rows;
+if(!str) return 0;
+
+return parseFloat(
+str.toString()
+.replace(/Rp/g,"")
+.replace(/\./g,"")
+.replace(/,/g,"")
+.trim()
+)||0;
+
 }
 
 fetch(CSV_URL)
-.then(r=>r.text())
+.then(res=>res.text())
 .then(text=>{
-const rows = parseCSV(text);
-let totalPJB=0,totalUsed=0,totalRemain=0,done=0,notyet=0;
-const tbody = document.getElementById("tableBody");
 
-rows.slice(1).forEach(r=>{
-if(r[0]?.trim() !== company) return;
+const company=getCompany();
 
-const amountPJB = parseNumber(r[2]);
-const status = r[3]?.trim();
-const pjb = r[4]?.trim();
-const serial = r[5]?.trim();
-const used = parseNumber(r[6]);
-const remain = parseNumber(r[7]);
+document.getElementById("companyName").innerText=company;
 
-totalPJB += amountPJB;
-totalUsed += used;
-totalRemain += remain;
+document.getElementById("updated").innerText=
+"Last updated: "+new Date().toLocaleString("id-ID");
 
-status==="DONE"?done++:notyet++;
+const rows=text.split("\n").slice(1);
 
-tbody.innerHTML += `
-<tr>
+let totalPJB=0;
+let totalUsed=0;
+let totalRemain=0;
+
+let doneCount=0;
+let notyetCount=0;
+
+const body=document.getElementById("tableBody");
+
+rows.forEach(row=>{
+
+const cols=row.split(",");
+
+const pemilik=cols[0]?.trim();
+
+if(pemilik!==company) return;
+
+const expired=cols[1]?.trim();
+
+const amountPJB=parseNumber(cols[2]);
+
+const status=cols[3]?.trim();
+
+const pjb=cols[4]?.trim();
+
+const serial=cols[5]?.trim();
+
+const used=parseNumber(cols[6]);
+
+const remain=parseNumber(cols[7]);
+
+totalPJB+=amountPJB;
+
+totalUsed+=used;
+
+totalRemain+=remain;
+
+if(status==="DONE") doneCount++;
+else notyetCount++;
+
+const tr=document.createElement("tr");
+
+tr.innerHTML=`
 <td>${pjb}</td>
 <td>${serial}</td>
-<td>${r[1]}</td>
-<td>${rupiah(remain)}</td>
-<td class="${status==="DONE"?"done":"notyet"}">${status}</td>
-</tr>`;
+<td>${expired}</td>
+<td>${formatRupiah(remain)}</td>
+<td class="${status==="DONE"?"status-done":"status-notyet"}">${status}</td>
+`;
+
+body.appendChild(tr);
+
 });
 
-document.getElementById("totalPJB").textContent = rupiah(totalPJB);
-document.getElementById("totalUsed").textContent = rupiah(totalUsed);
-document.getElementById("totalRemain").textContent = rupiah(totalRemain);
+document.getElementById("totalPJB").innerText=formatRupiah(totalPJB);
 
-new Chart(pieChart,{type:"pie",data:{labels:["Terpakai","Tersisa"],datasets:[{data:[totalUsed,totalRemain],backgroundColor:["#ff6384","#36a2eb"]}]}})
-new Chart(barChart,{type:"bar",data:{labels:["DONE","NOT YET"],datasets:[{data:[done,notyet],backgroundColor:["green","red"]}]}})
+document.getElementById("totalUsed").innerText=formatRupiah(totalUsed);
+
+document.getElementById("totalRemain").innerText=formatRupiah(totalRemain);
+
+
+new Chart(document.getElementById("pieChart"),{
+
+type:"pie",
+
+data:{
+labels:["Terpakai","Tersisa"],
+datasets:[{
+data:[totalUsed,totalRemain]
+}]
+}
+
 });
+
+
+new Chart(document.getElementById("barChart"),{
+
+type:"bar",
+
+data:{
+labels:["DONE","NOT YET"],
+datasets:[{
+label:"Jumlah",
+data:[doneCount,notyetCount],
+backgroundColor:["green","red"]
+}]
+}
+
+});
+
+
+});
+
 </script>
 
 </body>
