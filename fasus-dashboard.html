@@ -83,7 +83,6 @@ padding:20px;
 border-radius:8px;
 flex:1;
 height:350px;
-position:relative;
 }
 
 table{
@@ -242,7 +241,7 @@ let timeChartInstance=null;
 let isLoading=false;
 
 function getCSVUrl(){
-return BASE_CSV_URL+"&t="+new Date().getTime();
+return BASE_CSV_URL+"&t="+Date.now();
 }
 
 function formatRupiah(num){
@@ -256,9 +255,7 @@ return params.get("company");
 
 function parseNumber(str){
 if(!str) return 0;
-return parseFloat(
-str.replace(/Rp/g,"").replace(/\./g,"").replace(/,/g,"").trim()
-)||0;
+return parseFloat(str.replace(/Rp/g,"").replace(/\./g,"").replace(/,/g,"").trim())||0;
 }
 
 function getTimeClass(status){
@@ -308,16 +305,9 @@ document.getElementById("updated").innerText=
 
 const rows=text.split("\n").slice(1);
 
-let totalPJB=0;
-let totalUsed=0;
-let totalRemain=0;
-
-let doneCount=0;
-let notyetCount=0;
-
-let activeCount=0;
-let nearCount=0;
-let expiredCount=0;
+let totalPJB=0,totalUsed=0,totalRemain=0;
+let doneCount=0,notyetCount=0;
+let activeCount=0,nearCount=0,expiredCount=0;
 
 const body=document.getElementById("tableBody");
 body.innerHTML="";
@@ -371,37 +361,37 @@ document.getElementById("totalUsed").innerText=formatRupiah(totalUsed);
 document.getElementById("totalRemain").innerText=formatRupiah(totalRemain);
 
 if(pieChartInstance) pieChartInstance.destroy();
-pieChartInstance=new Chart(document.getElementById("pieChart"),{
-type:"pie",
-data:{labels:["Terpakai","Tersisa"],datasets:[{data:[totalUsed,totalRemain]}]},
-options:{responsive:true,maintainAspectRatio:false}
-});
+pieChartInstance=new Chart(pieChart,{type:"pie",data:{labels:["Terpakai","Tersisa"],datasets:[{data:[totalUsed,totalRemain]}]},options:{responsive:true,maintainAspectRatio:false}});
 
 if(barChartInstance) barChartInstance.destroy();
-barChartInstance=new Chart(document.getElementById("barChart"),{
-type:"bar",
-data:{labels:["DONE","NOT YET"],datasets:[{data:[doneCount,notyetCount],backgroundColor:["green","red"]}]},
-options:{responsive:true,maintainAspectRatio:false}
-});
+barChartInstance=new Chart(barChart,{type:"bar",data:{labels:["DONE","NOT YET"],datasets:[{data:[doneCount,notyetCount],backgroundColor:["green","red"]}]},options:{responsive:true,maintainAspectRatio:false}});
 
 if(timeChartInstance) timeChartInstance.destroy();
-timeChartInstance=new Chart(document.getElementById("timeChart"),{
-type:"pie",
-data:{labels:["ACTIVE","NEAR EXPIRED","EXPIRED"],datasets:[{data:[activeCount,nearCount,expiredCount],backgroundColor:["green","#e6a700","red"]}]},
-options:{responsive:true,maintainAspectRatio:false}
-});
+timeChartInstance=new Chart(timeChart,{type:"pie",data:{labels:["ACTIVE","NEAR EXPIRED","EXPIRED"],datasets:[{data:[activeCount,nearCount,expiredCount],backgroundColor:["green","#e6a700","red"]}]},options:{responsive:true,maintainAspectRatio:false}});
 
-}catch(err){
-console.error(err);
+}catch(e){
+console.error(e);
 }
 
 isLoading=false;
 }
 
+/* LOAD PERTAMA */
 loadDashboard();
 
-/* REFRESH STABIL SETIAP 60 DETIK */
+/* REFRESH SETIAP 60 DETIK */
 setInterval(loadDashboard,60000);
+
+/* REFRESH SAAT TAB AKTIF */
+document.addEventListener("visibilitychange",function(){
+if(!document.hidden) loadDashboard();
+});
+
+/* REFRESH SAAT WINDOW FOCUS */
+window.addEventListener("focus",loadDashboard);
+
+/* REFRESH SAAT PAGE SHOW */
+window.addEventListener("pageshow",loadDashboard);
 
 </script>
 
