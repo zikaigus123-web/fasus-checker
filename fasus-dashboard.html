@@ -1,12 +1,11 @@
 <!DOCTYPE html>
 <html lang="id">
-
 <head>
 
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Dashboard Fasus</title>
+<title>Fasus Dashboard</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -15,292 +14,272 @@
 body{
 margin:0;
 font-family:Arial;
-background:#0b0b0b;
-color:white;
+background:#f4f6f9;
 }
 
-/* HEADER */
-
 .header{
-background:#FFD100;
-color:black;
-padding:18px;
-font-size:24px;
-font-weight:bold;
+background:#1a1a1a;
+color:white;
+padding:15px 30px;
 display:flex;
 justify-content:space-between;
 align-items:center;
-position:relative;
-}
-
-.header-left{
-z-index:1;
-}
-
-.header-center{
-position:absolute;
-left:50%;
-transform:translateX(-50%);
-}
-
-.header-right{
-font-size:16px;
 }
 
 .logo{
-height:50px;
+height:35px;
 }
-
-/* BACK BUTTON */
-
-.back{
-margin:15px;
-padding:10px 20px;
-background:#FFD100;
-border:none;
-cursor:pointer;
-font-weight:bold;
-}
-
-/* CONTENT */
 
 .container{
-padding:20px;
+padding:30px;
+}
+
+.company{
+font-size:26px;
+font-weight:bold;
+margin-bottom:5px;
+}
+
+.updated{
+color:#666;
+margin-bottom:25px;
+}
+
+.summary{
+display:flex;
+gap:20px;
+margin-bottom:30px;
 }
 
 .card{
-background:#1a1a1a;
+background:white;
 padding:20px;
-border-radius:10px;
-margin-bottom:20px;
+border-radius:8px;
+flex:1;
+box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
 
-.grid{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:20px;
+.card-title{
+color:#666;
+margin-bottom:10px;
+}
+
+.card-value{
+font-size:24px;
+font-weight:bold;
+}
+
+.charts{
+display:flex;
+gap:30px;
+margin-bottom:30px;
+}
+
+.chart-box{
+background:white;
+padding:20px;
+border-radius:8px;
+flex:1;
+box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
 
 table{
 width:100%;
 border-collapse:collapse;
+background:white;
+box-shadow:0 2px 6px rgba(0,0,0,0.1);
+}
+
+th,td{
+padding:12px;
+border-bottom:1px solid #ddd;
 }
 
 th{
-background:#FFD100;
-color:black;
-padding:10px;
+background:#f8f8f8;
 }
 
-td{
-padding:10px;
-border-bottom:1px solid #333;
+.done{
+color:green;
+font-weight:bold;
 }
 
-/* SPINNER */
-
-.spinner{
-position:fixed;
-width:100%;
-height:100%;
-background:rgba(0,0,0,0.7);
-display:flex;
-justify-content:center;
-align-items:center;
-z-index:10;
-}
-
-.loader{
-border:8px solid #333;
-border-top:8px solid #FFD100;
-border-radius:50%;
-width:70px;
-height:70px;
-animation:spin 1s linear infinite;
-}
-
-@keyframes spin{
-0%{transform:rotate(0deg);}
-100%{transform:rotate(360deg);}
+.notyet{
+color:red;
+font-weight:bold;
 }
 
 </style>
 
 </head>
-
 <body>
-
-<div id="spinner" class="spinner">
-<div class="loader"></div>
-</div>
 
 <div class="header">
 
-<div class="header-left" id="title">
-Dashboard
-</div>
+<img src="logo-ut.png" class="logo">
 
-<div class="header-center">
-<img src="ut-school-logo.png" class="logo">
-</div>
-
-<div class="header-right" id="updated">
-Last updated
-</div>
+<div>Fasus Budget Dashboard</div>
 
 </div>
 
-<button class="back"
-onclick="window.location.href='index.html'">
-← Back
-</button>
+<div class="container">
 
-<div class="container" id="content" style="display:none;">
+<div id="companyName" class="company"></div>
 
-<div class="grid">
+<div id="lastUpdated" class="updated"></div>
+
+<div class="summary">
 
 <div class="card">
-
-<h3>Financial Summary</h3>
-
-<p>Total Budget:
-<span id="total"></span></p>
-
-<p>Terpakai:
-<span id="used"></span></p>
-
-<p>Tersisa:
-<span id="remaining"></span></p>
-
+<div class="card-title">Total Budget</div>
+<div id="totalBudget" class="card-value">0</div>
 </div>
 
 <div class="card">
-<canvas id="pie"></canvas>
-</div>
-
-</div>
-
-<div class="card">
-<canvas id="bar"></canvas>
+<div class="card-title">Total Terpakai</div>
+<div id="totalUsed" class="card-value">0</div>
 </div>
 
 <div class="card">
+<div class="card-title">Total Tersisa</div>
+<div id="totalRemaining" class="card-value">0</div>
+</div>
 
-<h3>Detail List</h3>
+</div>
+
+<div class="charts">
+
+<div class="chart-box">
+<canvas id="pieChart"></canvas>
+</div>
+
+<div class="chart-box">
+<canvas id="barChart"></canvas>
+</div>
+
+</div>
 
 <table>
 
 <thead>
 <tr>
 <th>PJB</th>
-<th>Serial</th>
-<th>Expired</th>
+<th>Serial Number</th>
+<th>Expired Date</th>
+<th>Sisa Budget</th>
 <th>Status</th>
-<th>Amount</th>
 </tr>
 </thead>
 
-<tbody id="table"></tbody>
+<tbody id="tableBody"></tbody>
 
 </table>
 
 </div>
 
-</div>
-
 <script>
 
-const SHEET_URL =
-"https://docs.google.com/spreadsheets/d/e/2PACX-1vTbJYRkPPTPDYHrDTy-eA_e5rUZ_VowdvBDjHU0BD7rKTvHIZfZAQf_ctl8qDkpiGYVnr9qARdX4fZ6/gviz/tq?tqx=out:json&gid=969077332";
+const CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vTbJYRkPPTPDYHrDTy-eA_e5rUZ_VowdvBDjHU0BD7rKTvHIZfZAQf_ctl8qDkpiGYVnr9qARdX4fZ6/pub?gid=1924167205&single=true&output=csv";
 
-function rupiah(n){
+const params=new URLSearchParams(window.location.search);
 
-return "Rp " + Number(n).toLocaleString("id-ID");
+const company=params.get("company");
 
-}
+document.getElementById("companyName").textContent=company;
 
-const params =
-new URLSearchParams(window.location.search);
+document.getElementById("lastUpdated").textContent=
+"Last updated: "+new Date().toLocaleString();
 
-const fasus =
-params.get("fasus");
+function parseCSV(text){
 
-document.getElementById("title").innerText =
-fasus + " Dashboard";
+const lines=text.split("\n");
 
-fetch(SHEET_URL)
+const data=[];
 
-.then(res=>res.text())
+for(let i=1;i<lines.length;i++){
 
-.then(text=>{
+const cols=lines[i].split(",");
 
-const json =
-JSON.parse(text.substring(47).slice(0,-2));
+if(cols.length<8) continue;
 
-const rows =
-json.table.rows;
+data.push({
 
-const data =
-rows.map(r=>({
-
-fasus: r.c[0]?.v || "",
-
-amount: Number(r.c[1]?.v || 0),
-
-status: r.c[2]?.v || "",
-
-pjb: r.c[3]?.v || "",
-
-serial: r.c[4]?.v || "",
-
-expired: r.c[5]?.v || ""
-
-}));
-
-const filtered =
-data.filter(d =>
-d.fasus.toLowerCase() === fasus.toLowerCase()
-);
-
-let total=0;
-let used=0;
-
-filtered.forEach(d=>{
-
-total += d.amount;
-
-if(d.status==="DONE")
-used += d.amount;
-
-document.getElementById("table").innerHTML +=
-
-`<tr>
-<td>${d.pjb}</td>
-<td>${d.serial}</td>
-<td>${d.expired}</td>
-<td>${d.status}</td>
-<td>${rupiah(d.amount)}</td>
-</tr>`;
+company:cols[0].trim(),
+expired:cols[1].trim(),
+budget:parseFloat(cols[2])||0,
+status:cols[3].trim(),
+pjb:cols[4].trim(),
+sn:cols[5].trim(),
+used:parseFloat(cols[6])||0,
+remaining:parseFloat(cols[7])||0
 
 });
 
-const remaining =
-total - used;
+}
 
-document.getElementById("total").innerText =
-rupiah(total);
+return data;
 
-document.getElementById("used").innerText =
-rupiah(used);
+}
 
-document.getElementById("remaining").innerText =
-rupiah(remaining);
+fetch(CSV_URL)
+.then(res=>res.text())
+.then(text=>{
 
-document.getElementById("updated").innerText =
-"Last updated: " +
-new Date().toLocaleString();
+const all=parseCSV(text);
 
-new Chart(document.getElementById("pie"),{
+const filtered=all.filter(x=>x.company===company);
+
+let totalBudget=0;
+let totalUsed=0;
+let totalRemaining=0;
+
+let doneCount=0;
+let notYetCount=0;
+
+const tbody=document.getElementById("tableBody");
+
+filtered.forEach(item=>{
+
+totalBudget+=item.budget;
+totalUsed+=item.used;
+totalRemaining+=item.remaining;
+
+if(item.status==="DONE"){
+doneCount++;
+}else{
+notYetCount++;
+}
+
+const row=document.createElement("tr");
+
+row.innerHTML=`
+<td>${item.pjb}</td>
+<td>${item.sn}</td>
+<td>${item.expired}</td>
+<td>${item.remaining.toLocaleString()}</td>
+<td class="${item.status==="DONE"?"done":"notyet"}">${item.status}</td>
+`;
+
+tbody.appendChild(row);
+
+});
+
+document.getElementById("totalBudget").textContent=
+totalBudget.toLocaleString();
+
+document.getElementById("totalUsed").textContent=
+totalUsed.toLocaleString();
+
+document.getElementById("totalRemaining").textContent=
+totalRemaining.toLocaleString();
+
+createCharts(totalUsed,totalRemaining,doneCount,notYetCount);
+
+});
+
+function createCharts(used,remaining,doneCount,notYetCount){
+
+new Chart(document.getElementById("pieChart"),{
 
 type:"pie",
 
@@ -308,25 +287,13 @@ data:{
 labels:["Terpakai","Tersisa"],
 datasets:[{
 data:[used,remaining],
-backgroundColor:["#ff3b3b","#00c853"]
+backgroundColor:["#ff6384","#36a2eb"]
 }]
 }
 
 });
 
-let doneCount=0;
-let notYetCount=0;
-
-filtered.forEach(d=>{
-
-if(d.status==="DONE")
-doneCount++;
-else
-notYetCount++;
-
-});
-
-new Chart(document.getElementById("bar"),{
+new Chart(document.getElementById("barChart"),{
 
 type:"bar",
 
@@ -334,23 +301,13 @@ data:{
 labels:["DONE","NOT YET"],
 datasets:[{
 data:[doneCount,notYetCount],
-backgroundColor:["#00c853","#FFD100"]
+backgroundColor:["green","red"]
 }]
 }
 
 });
 
-document.getElementById("spinner").style.display="none";
-
-document.getElementById("content").style.display="block";
-
-})
-
-.catch(err=>{
-
-alert("Gagal mengambil data dari spreadsheet");
-
-});
+}
 
 </script>
 
