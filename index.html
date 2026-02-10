@@ -1,91 +1,114 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<title>Fasus Checker</title>
 
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Fasus Checker</title>
 
 <style>
 
 body {
     margin: 0;
     font-family: Arial, sans-serif;
-    background: url('background.jpg') no-repeat center center fixed;
+    background: url("background.jpg") no-repeat center center fixed;
     background-size: cover;
 }
 
+/* overlay gelap */
 .overlay {
-    background: rgba(0,0,0,0.55);
-    width: 100%;
+    position: relative;
     height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    background: rgba(0,0,0,0.55);
 }
 
-.logo-container {
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
-    padding: 20px 40px;
+/* logo ut school atas tengah */
+.logo-ut {
+    position: absolute;
+    top: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    height: 80px;
 }
 
-.logo-container img {
-    height: 60px;
+/* logo insani bawah tengah */
+.logo-insani {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    height: 55px;
 }
 
-.center-box {
-    margin-top: 120px;
-    background: white;
-    padding: 40px;
-    border-radius: 10px;
-    width: 400px;
+/* konten tengah */
+.center-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     text-align: center;
-}
-
-.title {
-    font-size: 24px;
-    margin-bottom: 20px;
-    font-weight: bold;
-}
-
-input {
-    width: 100%;
-    padding: 12px;
-    font-size: 16px;
-}
-
-button {
-    margin-top: 15px;
-    padding: 12px;
-    width: 100%;
-    font-size: 16px;
-    background: #007bff;
     color: white;
+}
+
+/* judul */
+.title {
+    font-size: 48px;
+    font-weight: bold;
+    margin-bottom: 25px;
+}
+
+/* search container */
+.search-container {
+    position: relative;
+    display: inline-block;
+}
+
+/* input */
+#searchInput {
+    padding: 15px;
+    width: 380px;
+    font-size: 16px;
+    border-radius: 5px;
     border: none;
+}
+
+/* button */
+button {
+    padding: 15px 25px;
+    font-size: 16px;
+    background: #ffc107;
+    border: none;
+    font-weight: bold;
+    margin-left: 10px;
     cursor: pointer;
+    border-radius: 5px;
 }
 
 button:hover {
-    background: #0056b3;
+    background: #e0a800;
 }
 
+/* suggestion box */
 .suggestions {
+    position: absolute;
+    top: 55px;
+    width: 380px;
     background: white;
-    border: 1px solid #ccc;
-    max-height: 150px;
+    color: black;
+    border-radius: 5px;
+    max-height: 200px;
     overflow-y: auto;
     text-align: left;
 }
 
 .suggestion-item {
-    padding: 10px;
+    padding: 12px;
     cursor: pointer;
 }
 
 .suggestion-item:hover {
-    background: #eee;
+    background: #f1f1f1;
 }
 
 </style>
@@ -95,39 +118,53 @@ button:hover {
 
 <div class="overlay">
 
-<div class="logo-container">
-<img src="logo-ut.png">
-<img src="logo-insan.png">
-</div>
+<img src="logo-ut.png" class="logo-ut">
 
-<div class="center-box">
+<div class="center-content">
 
 <div class="title">
-Fasus Budget Checker
+CEK BUDGET FASUS
 </div>
 
-<input type="text" id="searchInput" placeholder="Ketik nama perusahaan...">
+<div class="search-container">
+
+<input
+type="text"
+id="searchInput"
+placeholder="Ketik nama perusahaan..."
+autocomplete="off"
+>
+
+<button onclick="checkCompany()">
+Check
+</button>
 
 <div id="suggestions" class="suggestions"></div>
 
-<button onclick="checkCompany()">Check</button>
+</div>
 
 </div>
+
+<img src="logo-insan.png" class="logo-insani">
 
 </div>
 
 <script>
 
+/* GANTI DENGAN LINK CSV GOOGLE SHEET ANDA */
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTbJYRkPPTPDYHrDTy-eA_e5rUZ_VowdvBDjHU0BD7rKTvHIZfZAQf_ctl8qDkpiGYVnr9qARdX4fZ6/pub?output=csv";
 
 let companies = [];
-let selectedCompany = "";
 
+const input = document.getElementById("searchInput");
+const suggestionBox = document.getElementById("suggestions");
+
+/* ambil data spreadsheet */
 fetch(CSV_URL)
-.then(response => response.text())
-.then(data => {
+.then(res => res.text())
+.then(text => {
 
-    const rows = data.split("\n");
+    const rows = text.split("\n");
 
     const companySet = new Set();
 
@@ -140,57 +177,56 @@ fetch(CSV_URL)
         if (company) {
             companySet.add(company.trim());
         }
+
     }
 
-    companies = Array.from(companySet);
+    companies = Array.from(companySet).sort();
 
 });
 
-const input = document.getElementById("searchInput");
-const suggestions = document.getElementById("suggestions");
-
+/* auto suggestion */
 input.addEventListener("input", function() {
 
     const value = this.value.toLowerCase();
 
-    suggestions.innerHTML = "";
+    suggestionBox.innerHTML = "";
 
     if (!value) return;
 
-    const filtered = companies.filter(c =>
-        c.toLowerCase().includes(value)
+    const filtered = companies.filter(company =>
+        company.toLowerCase().includes(value)
     );
 
     filtered.forEach(company => {
 
         const div = document.createElement("div");
 
-        div.classList.add("suggestion-item");
+        div.className = "suggestion-item";
 
         div.innerText = company;
 
         div.onclick = function() {
 
             input.value = company;
-
-            selectedCompany = company;
-
-            suggestions.innerHTML = "";
+            suggestionBox.innerHTML = "";
 
         };
 
-        suggestions.appendChild(div);
+        suggestionBox.appendChild(div);
 
     });
 
 });
 
+/* klik check */
 function checkCompany() {
 
-    const company = input.value;
+    const company = input.value.trim();
 
     if (!company) {
-        alert("Pilih perusahaan terlebih dahulu");
+
+        alert("Masukkan nama perusahaan");
+
         return;
     }
 
