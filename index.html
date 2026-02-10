@@ -5,13 +5,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Fasus Checker</title>
+<title>Fasus Budget Checker</title>
 
 <style>
 
+/* reset */
 body{
     margin:0;
-    font-family: Arial, sans-serif;
+    font-family:Arial, sans-serif;
     background:url("background.jpg") no-repeat center center fixed;
     background-size:cover;
 }
@@ -30,6 +31,7 @@ body{
     top:20px;
     right:80px;
     height:40px;
+    z-index:10;
 }
 
 /* logo insani bawah tengah */
@@ -39,6 +41,7 @@ body{
     left:50%;
     transform:translateX(-50%);
     height:45px;
+    z-index:10;
 }
 
 /* container tengah */
@@ -55,30 +58,36 @@ body{
 .title{
     font-size:48px;
     font-weight:bold;
-    margin-bottom:20px;
+    margin-bottom:25px;
     letter-spacing:1px;
 }
 
-/* search container */
+/* search wrapper */
 .search-wrapper{
     display:flex;
     justify-content:center;
-    align-items:center;
+    align-items:flex-start;
     gap:10px;
+}
+
+/* search box parent */
+.search-box{
+    position:relative;
 }
 
 /* input */
 #searchInput{
-    width:300px;
+    width:320px;
     padding:12px;
     font-size:16px;
-    border:none;
     border-radius:4px;
+    border:none;
+    outline:none;
 }
 
 /* button */
 button{
-    padding:12px 20px;
+    padding:12px 22px;
     font-size:16px;
     font-weight:bold;
     background:#ffc107;
@@ -92,26 +101,29 @@ button:hover{
     background:#e0a800;
 }
 
-/* suggestion box */
+/* suggestion dropdown */
 .suggestions{
     position:absolute;
-    width:300px;
+    top:46px;
+    left:0;
+    width:100%;
     background:white;
     color:black;
-    text-align:left;
     border-radius:4px;
-    margin-top:5px;
     max-height:200px;
     overflow-y:auto;
+    z-index:999;
+    box-shadow:0 4px 10px rgba(0,0,0,0.3);
 }
 
+/* suggestion item */
 .suggestion-item{
     padding:10px;
     cursor:pointer;
 }
 
 .suggestion-item:hover{
-    background:#eee;
+    background:#f1f1f1;
 }
 
 </style>
@@ -121,10 +133,10 @@ button:hover{
 
 <div class="overlay">
 
-<!-- logo kanan atas -->
+<!-- logo ut school -->
 <img src="logo-ut.png" class="logo-ut">
 
-<!-- tengah -->
+<!-- konten tengah -->
 <div class="center-container">
 
 <div class="title">
@@ -133,7 +145,7 @@ CEK BUDGET FASUS
 
 <div class="search-wrapper">
 
-<div style="position:relative;">
+<div class="search-box">
 
 <input
 type="text"
@@ -146,32 +158,34 @@ autocomplete="off"
 
 </div>
 
-<button onclick="checkCompany()">
-Check
-</button>
+<button onclick="checkCompany()">Check</button>
 
 </div>
 
 </div>
 
-<!-- logo bawah -->
+<!-- logo insani -->
 <img src="logo-insan.png" class="logo-insani">
 
 </div>
 
 <script>
 
-/* GANTI LINK INI */
-const CSV_URL="SPREADSHEET_CSV_URL";
+/* GANTI DENGAN LINK CSV GOOGLE SHEET */
+const CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vTbJYRkPPTPDYHrDTy-eA_e5rUZ_VowdvBDjHU0BD7rKTvHIZfZAQf_ctl8qDkpiGYVnr9qARdX4fZ6/pub?output=csv";
+
+/* contoh format:
+https://docs.google.com/spreadsheets/d/e/XXXX/pub?output=csv
+*/
 
 let companies=[];
 
 const input=document.getElementById("searchInput");
-const suggestions=document.getElementById("suggestions");
+const suggestionBox=document.getElementById("suggestions");
 
-/* load csv */
+/* ambil data CSV */
 fetch(CSV_URL)
-.then(res=>res.text())
+.then(response=>response.text())
 .then(text=>{
 
 const rows=text.split("\n");
@@ -184,7 +198,7 @@ const cols=rows[i].split(",");
 
 const company=cols[0];
 
-if(company){
+if(company && company.trim()!==""){
 set.add(company.trim());
 }
 
@@ -199,12 +213,12 @@ input.addEventListener("input",function(){
 
 const value=this.value.toLowerCase();
 
-suggestions.innerHTML="";
+suggestionBox.innerHTML="";
 
-if(!value)return;
+if(value==="") return;
 
-const filtered=companies.filter(c=>
-c.toLowerCase().includes(value)
+const filtered=companies.filter(company=>
+company.toLowerCase().includes(value)
 );
 
 filtered.forEach(company=>{
@@ -213,28 +227,28 @@ const div=document.createElement("div");
 
 div.className="suggestion-item";
 
-div.innerText=company;
+div.textContent=company;
 
 div.onclick=function(){
 
 input.value=company;
 
-suggestions.innerHTML="";
+suggestionBox.innerHTML="";
 
 };
 
-suggestions.appendChild(div);
+suggestionBox.appendChild(div);
 
 });
 
 });
 
-/* redirect */
+/* redirect ke dashboard */
 function checkCompany(){
 
 const company=input.value.trim();
 
-if(!company){
+if(company===""){
 
 alert("Masukkan nama perusahaan");
 
@@ -246,6 +260,15 @@ window.location.href=
 "fasus-dashboard.html?company="+encodeURIComponent(company);
 
 }
+
+/* klik luar untuk tutup suggestion */
+document.addEventListener("click",function(e){
+
+if(!e.target.closest(".search-box")){
+suggestionBox.innerHTML="";
+}
+
+});
 
 </script>
 
