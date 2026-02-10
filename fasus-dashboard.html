@@ -16,7 +16,47 @@ margin:0;
 background:#f4f6f8;
 }
 
-/* HEADER */
+/* LOADING OVERLAY */
+.loading-overlay{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(255,255,255,0.9);
+display:flex;
+justify-content:center;
+align-items:center;
+z-index:9999;
+flex-direction:column;
+}
+
+.spinner{
+border:6px solid #eee;
+border-top:6px solid #f4b400;
+border-radius:50%;
+width:60px;
+height:60px;
+animation:spin 1s linear infinite;
+margin-bottom:15px;
+}
+
+@keyframes spin{
+0%{transform:rotate(0deg);}
+100%{transform:rotate(360deg);}
+}
+
+.loading-text{
+font-size:18px;
+color:#333;
+font-weight:bold;
+}
+
+/* HIDE CONTENT WHILE LOADING */
+.hidden-content{
+display:none;
+}
+
 .header{
 background:#111;
 color:white;
@@ -30,7 +70,6 @@ align-items:center;
 height:40px;
 }
 
-/* CONTAINER */
 .container{
 padding:30px;
 }
@@ -45,7 +84,6 @@ color:#666;
 margin-bottom:20px;
 }
 
-/* CARDS */
 .cards{
 display:flex;
 gap:20px;
@@ -70,7 +108,6 @@ font-weight:bold;
 margin-top:5px;
 }
 
-/* CHARTS */
 .charts{
 display:flex;
 gap:20px;
@@ -88,7 +125,6 @@ max-height:350px;
 position:relative;
 }
 
-/* TABLE */
 table{
 width:100%;
 background:white;
@@ -106,7 +142,6 @@ padding:10px;
 border-top:1px solid #ddd;
 }
 
-/* STATUS COLORS */
 .status-done{
 color:green;
 font-weight:bold;
@@ -132,7 +167,6 @@ color:red;
 font-weight:bold;
 }
 
-/* SEARCH */
 .search-box{
 background:white;
 padding:15px;
@@ -150,35 +184,7 @@ border-radius:6px;
 }
 
 .highlight{
-background:#fff3cd;
-}
-
-/* LOADING OVERLAY */
-.loading-overlay{
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:rgba(255,255,255,0.9);
-display:flex;
-justify-content:center;
-align-items:center;
-z-index:9999;
-}
-
-.spinner{
-width:60px;
-height:60px;
-border:6px solid #eee;
-border-top:6px solid #f1b500;
-border-radius:50%;
-animation:spin 1s linear infinite;
-}
-
-@keyframes spin{
-0%{transform:rotate(0deg);}
-100%{transform:rotate(360deg);}
+background-color:#fff3cd;
 }
 
 .hidden{
@@ -190,10 +196,14 @@ display:none;
 
 <body>
 
-<!-- LOADING -->
-<div id="loadingOverlay" class="loading-overlay">
+<!-- LOADING SCREEN -->
+<div id="loadingScreen" class="loading-overlay">
 <div class="spinner"></div>
+<div class="loading-text">Loading dashboard...</div>
 </div>
+
+<!-- MAIN CONTENT -->
+<div id="mainContent" class="hidden-content">
 
 <div class="header">
 <img src="logo-ut.png" class="logo">
@@ -249,8 +259,9 @@ display:none;
 type="text"
 id="searchInput"
 class="search-input"
-placeholder="Cari PJB atau Serial Number..."
-onkeyup="searchTable()">
+placeholder="Cari berdasarkan PJB atau Serial Number..."
+onkeyup="searchTable()"
+>
 </div>
 
 <table>
@@ -272,58 +283,88 @@ onkeyup="searchTable()">
 
 </div>
 
+</div>
+
 <script>
 
-const CSV_URL="YOUR_CSV_URL_HERE";
+const CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vTbJYRkPPTPDYHrDTy-eA_e5rUZ_VowdvBDjHU0BD7rKTvHIZfZAQf_ctl8qDkpiGYVnr9qARdX4fZ6/pub?gid=1924167205&single=true&output=csv";
+
+function showDashboard(){
+
+document.getElementById("loadingScreen").style.display="none";
+
+document.getElementById("mainContent").classList.remove("hidden-content");
+
+}
 
 function formatRupiah(num){
-return "Rp "+num.toLocaleString("id-ID");
+return "Rp " + num.toLocaleString("id-ID");
 }
 
 function getCompany(){
-return new URLSearchParams(window.location.search).get("company");
+const params=new URLSearchParams(window.location.search);
+return params.get("company");
 }
 
 function parseNumber(str){
-if(!str)return 0;
-return parseFloat(str.replace(/[^0-9]/g,""))||0;
+
+if(!str) return 0;
+
+return parseFloat(
+str.toString()
+.replace(/Rp/g,"")
+.replace(/\./g,"")
+.replace(/,/g,"")
+.trim()
+)||0;
+
 }
 
 function getTimeClass(status){
-if(status==="ACTIVE")return"time-active";
-if(status==="NEAR EXPIRED")return"time-near";
-if(status==="EXPIRED")return"time-expired";
-return"";
+
+if(status==="ACTIVE") return "time-active";
+if(status==="NEAR EXPIRED") return "time-near";
+if(status==="EXPIRED") return "time-expired";
+
+return "";
+
 }
 
-/* SEARCH FUNCTION */
 function searchTable(){
 
 const input=document.getElementById("searchInput").value.toLowerCase();
+
 const rows=document.querySelectorAll("#tableBody tr");
 
 rows.forEach(row=>{
 
-const pjb=row.dataset.pjb;
-const serial=row.dataset.serial;
+const pjb=row.getAttribute("data-pjb");
+const serial=row.getAttribute("data-serial");
 
 row.classList.remove("highlight");
 
-if(pjb.includes(input)||serial.includes(input)){
+if(
+pjb.includes(input) ||
+serial.includes(input)
+){
 
 row.style.display="";
 
-if(input!=="")row.classList.add("highlight");
+if(input!==""){
+row.classList.add("highlight");
+}
 
-}else{
+}
+else{
+
 row.style.display="none";
+
 }
 
 });
 
 }
 
-/* LOAD DATA */
 fetch(CSV_URL)
 .then(res=>res.text())
 .then(text=>{
@@ -331,45 +372,57 @@ fetch(CSV_URL)
 const company=getCompany();
 
 document.getElementById("companyName").innerText=company;
+
 document.getElementById("updated").innerText=
 "Last updated: "+new Date().toLocaleString("id-ID");
 
 const rows=text.split("\n").slice(1);
 
-let totalPJB=0,totalUsed=0,totalRemain=0;
-let doneCount=0,notyetCount=0;
-let activeCount=0,nearCount=0,expiredCount=0;
+let totalPJB=0;
+let totalUsed=0;
+let totalRemain=0;
+
+let doneCount=0;
+let notyetCount=0;
+
+let activeCount=0;
+let nearCount=0;
+let expiredCount=0;
 
 const body=document.getElementById("tableBody");
 
 rows.forEach(row=>{
 
 const cols=row.split(",");
-if(cols[0].trim()!==company)return;
 
-const expired=cols[2].trim();
+const pemilik=cols[0]?.trim();
+
+if(pemilik!==company) return;
+
+const expired=cols[2]?.trim();
 const amountPJB=parseNumber(cols[3]);
-const status=cols[4].trim();
-const pjb=cols[5].trim();
-const serial=cols[6].trim();
+const status=cols[4]?.trim();
+const pjb=cols[5]?.trim();
+const serial=cols[6]?.trim();
 const used=parseNumber(cols[7]);
 const remain=parseNumber(cols[8]);
-const statusWaktu=cols[9].trim();
+const statusWaktu=cols[9]?.trim();
 
 totalPJB+=amountPJB;
 totalUsed+=used;
 totalRemain+=remain;
 
-status==="DONE"?doneCount++:notyetCount++;
+if(status==="DONE") doneCount++;
+else notyetCount++;
 
-if(statusWaktu==="ACTIVE")activeCount++;
-else if(statusWaktu==="NEAR EXPIRED")nearCount++;
-else expiredCount++;
+if(statusWaktu==="ACTIVE") activeCount++;
+else if(statusWaktu==="NEAR EXPIRED") nearCount++;
+else if(statusWaktu==="EXPIRED") expiredCount++;
 
 const tr=document.createElement("tr");
 
-tr.dataset.pjb=pjb.toLowerCase();
-tr.dataset.serial=serial.toLowerCase();
+tr.setAttribute("data-pjb", pjb.toLowerCase());
+tr.setAttribute("data-serial", serial.toLowerCase());
 
 tr.innerHTML=`
 <td>${pjb}</td>
@@ -384,77 +437,61 @@ body.appendChild(tr);
 
 });
 
-/* UPDATE CARDS */
-totalPJBEl.innerText=formatRupiah(totalPJB);
-totalUsedEl.innerText=formatRupiah(totalUsed);
-totalRemainEl.innerText=formatRupiah(totalRemain);
+document.getElementById("totalPJB").innerText=formatRupiah(totalPJB);
+document.getElementById("totalUsed").innerText=formatRupiah(totalUsed);
+document.getElementById("totalRemain").innerText=formatRupiah(totalRemain);
 
-/* PIE TERPAKAI */
-new Chart(pieChart,{
+new Chart(document.getElementById("pieChart"),{
 type:"pie",
 data:{
 labels:["Terpakai","Tersisa"],
-datasets:[{data:[totalUsed,totalRemain]}]
+datasets:[{
+data:[totalUsed,totalRemain]
+}]
 },
 options:{
 responsive:true,
-maintainAspectRatio:false,
-animation:{
-animateRotate:true,
-animateScale:true,
-duration:1200
-}
+maintainAspectRatio:false
 }
 });
 
-/* BAR CHART GROW FROM BOTTOM */
-new Chart(barChart,{
+new Chart(document.getElementById("barChart"),{
 type:"bar",
 data:{
 labels:["DONE","NOT YET"],
 datasets:[{
+label:"Jumlah",
 data:[doneCount,notyetCount],
 backgroundColor:["green","red"]
 }]
 },
 options:{
 responsive:true,
-maintainAspectRatio:false,
-animations:{
-y:{
-from:0,
-duration:1200
-}
-},
-scales:{
-y:{beginAtZero:true}
-}
+maintainAspectRatio:false
 }
 });
 
-/* PIE STATUS WAKTU */
-new Chart(timeChart,{
+new Chart(document.getElementById("timeChart"),{
 type:"pie",
 data:{
 labels:["ACTIVE","NEAR EXPIRED","EXPIRED"],
 datasets:[{
 data:[activeCount,nearCount,expiredCount],
-backgroundColor:["green","#e6a700","red"]
+backgroundColor:[
+"green",
+"#e6a700",
+"red"
+]
 }]
 },
 options:{
 responsive:true,
-maintainAspectRatio:false,
-animation:{
-animateRotate:true,
-animateScale:true,
-duration:1400
-}
+maintainAspectRatio:false
 }
 });
 
-/* HIDE LOADING */
-document.getElementById("loadingOverlay").classList.add("hidden");
+/* SHOW DASHBOARD AFTER LOAD COMPLETE */
+showDashboard();
 
 });
 
