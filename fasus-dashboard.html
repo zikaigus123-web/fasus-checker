@@ -93,7 +93,6 @@ box-shadow:0 2px 6px rgba(0,0,0,0.1);
 th,td{
 padding:12px;
 border-bottom:1px solid #ddd;
-text-align:left;
 }
 
 th{
@@ -133,7 +132,7 @@ font-weight:bold;
 
 <div class="card">
 <div class="card-title">Total Amount PJB</div>
-<div id="totalBudget" class="card-value">Rp 0</div>
+<div id="totalPJB" class="card-value">Rp 0</div>
 </div>
 
 <div class="card">
@@ -191,6 +190,20 @@ document.getElementById("companyName").textContent=company;
 document.getElementById("lastUpdated").textContent=
 "Last updated: "+new Date().toLocaleString("id-ID");
 
+
+/* PARSER AMAN UNTUK FORMAT RP, NUMBER, ATAU TEXT */
+function parseRupiah(value){
+
+if(!value) return 0;
+
+return Number(
+value
+.toString()
+.replace(/[^0-9]/g,"")
+)||0;
+
+}
+
 function formatRupiah(number){
 
 return new Intl.NumberFormat("id-ID",{
@@ -201,7 +214,8 @@ minimumFractionDigits:0
 
 }
 
-/* PARSER CSV SESUAI STRUKTUR SPREADSHEET */
+
+/* CSV PARSER */
 function parseCSV(text){
 
 const rows=text.trim().split("\n");
@@ -217,13 +231,20 @@ if(cols.length<8) continue;
 data.push({
 
 company:cols[0].trim(),
+
 expired:cols[1].trim(),
-amountPJB:Number(cols[2]),
+
+amountPJB:parseRupiah(cols[2]),
+
 status:cols[3].trim(),
+
 pjb:cols[4].trim(),
-serialNumber:cols[5].trim(),
-amountUsed:Number(cols[6]),
-amountRemaining:Number(cols[7])
+
+serial:cols[5].trim(),
+
+used:parseRupiah(cols[6]),
+
+remaining:parseRupiah(cols[7])
 
 });
 
@@ -233,13 +254,14 @@ return data;
 
 }
 
+
 fetch(CSV_URL)
 .then(res=>res.text())
 .then(text=>{
 
-const allData=parseCSV(text);
+const all=parseCSV(text);
 
-const filtered=allData.filter(row=>row.company===company);
+const filtered=all.filter(row=>row.company===company);
 
 let totalPJB=0;
 let totalUsed=0;
@@ -253,27 +275,28 @@ const tbody=document.getElementById("tableBody");
 filtered.forEach(row=>{
 
 totalPJB+=row.amountPJB;
-totalUsed+=row.amountUsed;
-totalRemaining+=row.amountRemaining;
+totalUsed+=row.used;
+totalRemaining+=row.remaining;
 
 if(row.status==="DONE") doneCount++;
 else notYetCount++;
 
-const tr=document.createElement("tr");
+tbody.innerHTML+=`
 
-tr.innerHTML=`
+<tr>
 <td>${row.pjb}</td>
-<td>${row.serialNumber}</td>
+<td>${row.serial}</td>
 <td>${row.expired}</td>
-<td>${formatRupiah(row.amountRemaining)}</td>
+<td>${formatRupiah(row.remaining)}</td>
 <td class="${row.status==="DONE"?"done":"notyet"}">${row.status}</td>
-`;
+</tr>
 
-tbody.appendChild(tr);
+`;
 
 });
 
-document.getElementById("totalBudget").textContent=
+
+document.getElementById("totalPJB").textContent=
 formatRupiah(totalPJB);
 
 document.getElementById("totalUsed").textContent=
@@ -282,11 +305,6 @@ formatRupiah(totalUsed);
 document.getElementById("totalRemaining").textContent=
 formatRupiah(totalRemaining);
 
-createCharts(totalUsed,totalRemaining,doneCount,notYetCount);
-
-});
-
-function createCharts(used,remaining,doneCount,notYetCount){
 
 new Chart(document.getElementById("pieChart"),{
 
@@ -295,12 +313,13 @@ type:"pie",
 data:{
 labels:["Terpakai","Tersisa"],
 datasets:[{
-data:[used,remaining],
+data:[totalUsed,totalRemaining],
 backgroundColor:["#ff6384","#36a2eb"]
 }]
 }
 
 });
+
 
 new Chart(document.getElementById("barChart"),{
 
@@ -317,7 +336,7 @@ backgroundColor:["green","red"]
 
 });
 
-}
+});
 
 </script>
 
