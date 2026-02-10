@@ -16,6 +16,47 @@ margin:0;
 background:#f4f6f8;
 }
 
+/* LOADING OVERLAY */
+.loading-overlay{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(255,255,255,0.9);
+display:flex;
+justify-content:center;
+align-items:center;
+z-index:9999;
+flex-direction:column;
+}
+
+.spinner{
+border:6px solid #eee;
+border-top:6px solid #f4b400;
+border-radius:50%;
+width:60px;
+height:60px;
+animation:spin 1s linear infinite;
+margin-bottom:15px;
+}
+
+@keyframes spin{
+0%{transform:rotate(0deg);}
+100%{transform:rotate(360deg);}
+}
+
+.loading-text{
+font-size:18px;
+color:#333;
+font-weight:bold;
+}
+
+/* HIDE CONTENT WHILE LOADING */
+.hidden-content{
+display:none;
+}
+
 .header{
 background:#111;
 color:white;
@@ -155,6 +196,15 @@ display:none;
 
 <body>
 
+<!-- LOADING SCREEN -->
+<div id="loadingScreen" class="loading-overlay">
+<div class="spinner"></div>
+<div class="loading-text">Loading dashboard...</div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div id="mainContent" class="hidden-content">
+
 <div class="header">
 <img src="logo-ut.png" class="logo">
 <div>Fasus Budget Dashboard</div>
@@ -233,9 +283,19 @@ onkeyup="searchTable()"
 
 </div>
 
+</div>
+
 <script>
 
 const CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vTbJYRkPPTPDYHrDTy-eA_e5rUZ_VowdvBDjHU0BD7rKTvHIZfZAQf_ctl8qDkpiGYVnr9qARdX4fZ6/pub?gid=1924167205&single=true&output=csv";
+
+function showDashboard(){
+
+document.getElementById("loadingScreen").style.display="none";
+
+document.getElementById("mainContent").classList.remove("hidden-content");
+
+}
 
 function formatRupiah(num){
 return "Rp " + num.toLocaleString("id-ID");
@@ -289,6 +349,7 @@ serial.includes(input)
 ){
 
 row.style.display="";
+
 if(input!==""){
 row.classList.add("highlight");
 }
@@ -381,27 +442,21 @@ document.getElementById("totalUsed").innerText=formatRupiah(totalUsed);
 document.getElementById("totalRemain").innerText=formatRupiah(totalRemain);
 
 new Chart(document.getElementById("pieChart"),{
-
 type:"pie",
-
 data:{
 labels:["Terpakai","Tersisa"],
 datasets:[{
 data:[totalUsed,totalRemain]
 }]
 },
-
 options:{
 responsive:true,
 maintainAspectRatio:false
 }
-
 });
 
 new Chart(document.getElementById("barChart"),{
-
 type:"bar",
-
 data:{
 labels:["DONE","NOT YET"],
 datasets:[{
@@ -410,18 +465,14 @@ data:[doneCount,notyetCount],
 backgroundColor:["green","red"]
 }]
 },
-
 options:{
 responsive:true,
 maintainAspectRatio:false
 }
-
 });
 
 new Chart(document.getElementById("timeChart"),{
-
 type:"pie",
-
 data:{
 labels:["ACTIVE","NEAR EXPIRED","EXPIRED"],
 datasets:[{
@@ -433,13 +484,14 @@ backgroundColor:[
 ]
 }]
 },
-
 options:{
 responsive:true,
 maintainAspectRatio:false
 }
-
 });
+
+/* SHOW DASHBOARD AFTER LOAD COMPLETE */
+showDashboard();
 
 });
 
