@@ -168,6 +168,15 @@ font-weight:bold;
 
 </div>
 
+<!-- PIE STATUS WAKTU BARU -->
+<div class="charts">
+
+<div class="chart-box">
+<canvas id="timeChart"></canvas>
+</div>
+
+</div>
+
 <table>
 
 <thead>
@@ -239,6 +248,11 @@ let totalRemain=0;
 let doneCount=0;
 let notyetCount=0;
 
+/* COUNTER STATUS WAKTU BARU */
+let activeCount=0;
+let nearCount=0;
+let expiredCount=0;
+
 const body=document.getElementById("tableBody");
 
 rows.forEach(row=>{
@@ -250,19 +264,12 @@ const pemilik=cols[0]?.trim();
 if(pemilik!==company) return;
 
 const expired=cols[2]?.trim();
-
 const amountPJB=parseNumber(cols[3]);
-
 const status=cols[4]?.trim();
-
 const pjb=cols[5]?.trim();
-
 const serial=cols[6]?.trim();
-
 const used=parseNumber(cols[7]);
-
 const remain=parseNumber(cols[8]);
-
 const statusWaktu=cols[9]?.trim();
 
 totalPJB+=amountPJB;
@@ -271,6 +278,10 @@ totalRemain+=remain;
 
 if(status==="DONE") doneCount++;
 else notyetCount++;
+
+if(statusWaktu==="ACTIVE") activeCount++;
+else if(statusWaktu==="NEAR EXPIRED") nearCount++;
+else if(statusWaktu==="EXPIRED") expiredCount++;
 
 const tr=document.createElement("tr");
 
@@ -291,6 +302,7 @@ document.getElementById("totalPJB").innerText=formatRupiah(totalPJB);
 document.getElementById("totalUsed").innerText=formatRupiah(totalUsed);
 document.getElementById("totalRemain").innerText=formatRupiah(totalRemain);
 
+/* PIE TERPAKAI */
 new Chart(document.getElementById("pieChart"),{
 type:"pie",
 data:{
@@ -301,6 +313,7 @@ data:[totalUsed,totalRemain]
 }
 });
 
+/* BAR STATUS */
 new Chart(document.getElementById("barChart"),{
 type:"bar",
 data:{
@@ -311,6 +324,25 @@ data:[doneCount,notyetCount],
 backgroundColor:["green","red"]
 }]
 }
+});
+
+/* PIE STATUS WAKTU BARU */
+new Chart(document.getElementById("timeChart"),{
+
+type:"pie",
+
+data:{
+labels:["ACTIVE","NEAR EXPIRED","EXPIRED"],
+datasets:[{
+data:[activeCount,nearCount,expiredCount],
+backgroundColor:[
+"green",
+"#e6a700",
+"red"
+]
+}]
+}
+
 });
 
 });
