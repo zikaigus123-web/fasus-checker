@@ -1,25 +1,464 @@
-new Chart(document.getElementById("pieChart"),{
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-type:"pie",
+<title>Fasus Budget Dashboard</title>
 
-data:{
-labels:["Terpakai","Tersisa"],
-datasets:[{
-data:[totalUsed,totalRemain]
-}]
-},
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-options:{
-responsive:true,
-maintainAspectRatio:false,
+<style>
 
-animation:{
-animateRotate:true,
-animateScale:true,
-duration:1200,
-easing:"easeOutCubic"
+body{
+font-family:Arial;
+margin:0;
+background:#f4f6f8;
 }
 
+/* HEADER */
+.header{
+background:#111;
+color:white;
+padding:15px 30px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+.logo{
+height:40px;
+}
+
+/* CONTAINER */
+.container{
+padding:30px;
+}
+
+.company{
+font-size:32px;
+font-weight:bold;
+}
+
+.updated{
+color:#666;
+margin-bottom:20px;
+}
+
+/* CARDS */
+.cards{
+display:flex;
+gap:20px;
+margin-bottom:25px;
+}
+
+.card{
+background:white;
+padding:20px;
+border-radius:8px;
+flex:1;
+box-shadow:0 2px 6px rgba(0,0,0,0.1);
+}
+
+.card-title{
+color:#666;
+}
+
+.card-value{
+font-size:28px;
+font-weight:bold;
+margin-top:5px;
+}
+
+/* CHARTS */
+.charts{
+display:flex;
+gap:20px;
+margin-bottom:30px;
+flex-wrap:wrap;
+}
+
+.chart-box{
+background:white;
+padding:20px;
+border-radius:8px;
+flex:1;
+height:350px;
+max-height:350px;
+position:relative;
+}
+
+/* TABLE */
+table{
+width:100%;
+background:white;
+border-collapse:collapse;
+}
+
+th{
+background:#eee;
+padding:12px;
+text-align:left;
+}
+
+td{
+padding:10px;
+border-top:1px solid #ddd;
+}
+
+/* STATUS COLORS */
+.status-done{
+color:green;
+font-weight:bold;
+}
+
+.status-notyet{
+color:red;
+font-weight:bold;
+}
+
+.time-active{
+color:green;
+font-weight:bold;
+}
+
+.time-near{
+color:#e6a700;
+font-weight:bold;
+}
+
+.time-expired{
+color:red;
+font-weight:bold;
+}
+
+/* SEARCH */
+.search-box{
+background:white;
+padding:15px;
+margin-bottom:15px;
+border-radius:8px;
+box-shadow:0 2px 6px rgba(0,0,0,0.1);
+}
+
+.search-input{
+width:100%;
+padding:12px;
+font-size:16px;
+border:1px solid #ccc;
+border-radius:6px;
+}
+
+.highlight{
+background:#fff3cd;
+}
+
+/* LOADING OVERLAY */
+.loading-overlay{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(255,255,255,0.9);
+display:flex;
+justify-content:center;
+align-items:center;
+z-index:9999;
+}
+
+.spinner{
+width:60px;
+height:60px;
+border:6px solid #eee;
+border-top:6px solid #f1b500;
+border-radius:50%;
+animation:spin 1s linear infinite;
+}
+
+@keyframes spin{
+0%{transform:rotate(0deg);}
+100%{transform:rotate(360deg);}
+}
+
+.hidden{
+display:none;
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- LOADING -->
+<div id="loadingOverlay" class="loading-overlay">
+<div class="spinner"></div>
+</div>
+
+<div class="header">
+<img src="logo-ut.png" class="logo">
+<div>Fasus Budget Dashboard</div>
+</div>
+
+<div class="container">
+
+<div class="company" id="companyName"></div>
+<div class="updated" id="updated"></div>
+
+<div class="cards">
+
+<div class="card">
+<div class="card-title">Total Amount PJB</div>
+<div class="card-value" id="totalPJB">Rp 0</div>
+</div>
+
+<div class="card">
+<div class="card-title">Total Amount Terpakai</div>
+<div class="card-value" id="totalUsed">Rp 0</div>
+</div>
+
+<div class="card">
+<div class="card-title">Total Amount Sisa Budget PJB</div>
+<div class="card-value" id="totalRemain">Rp 0</div>
+</div>
+
+</div>
+
+<div class="charts">
+
+<div class="chart-box">
+<canvas id="pieChart"></canvas>
+</div>
+
+<div class="chart-box">
+<canvas id="barChart"></canvas>
+</div>
+
+</div>
+
+<div class="charts">
+
+<div class="chart-box" style="height:300px; max-width:400px; margin:auto;">
+<canvas id="timeChart"></canvas>
+</div>
+
+</div>
+
+<div class="search-box">
+<input
+type="text"
+id="searchInput"
+class="search-input"
+placeholder="Cari PJB atau Serial Number..."
+onkeyup="searchTable()">
+</div>
+
+<table>
+
+<thead>
+<tr>
+<th>PJB</th>
+<th>Serial Number</th>
+<th>Expired Date</th>
+<th>Sisa Budget</th>
+<th>Status</th>
+<th>Status Waktu</th>
+</tr>
+</thead>
+
+<tbody id="tableBody"></tbody>
+
+</table>
+
+</div>
+
+<script>
+
+const CSV_URL="YOUR_CSV_URL_HERE";
+
+function formatRupiah(num){
+return "Rp "+num.toLocaleString("id-ID");
+}
+
+function getCompany(){
+return new URLSearchParams(window.location.search).get("company");
+}
+
+function parseNumber(str){
+if(!str)return 0;
+return parseFloat(str.replace(/[^0-9]/g,""))||0;
+}
+
+function getTimeClass(status){
+if(status==="ACTIVE")return"time-active";
+if(status==="NEAR EXPIRED")return"time-near";
+if(status==="EXPIRED")return"time-expired";
+return"";
+}
+
+/* SEARCH FUNCTION */
+function searchTable(){
+
+const input=document.getElementById("searchInput").value.toLowerCase();
+const rows=document.querySelectorAll("#tableBody tr");
+
+rows.forEach(row=>{
+
+const pjb=row.dataset.pjb;
+const serial=row.dataset.serial;
+
+row.classList.remove("highlight");
+
+if(pjb.includes(input)||serial.includes(input)){
+
+row.style.display="";
+
+if(input!=="")row.classList.add("highlight");
+
+}else{
+row.style.display="none";
 }
 
 });
+
+}
+
+/* LOAD DATA */
+fetch(CSV_URL)
+.then(res=>res.text())
+.then(text=>{
+
+const company=getCompany();
+
+document.getElementById("companyName").innerText=company;
+document.getElementById("updated").innerText=
+"Last updated: "+new Date().toLocaleString("id-ID");
+
+const rows=text.split("\n").slice(1);
+
+let totalPJB=0,totalUsed=0,totalRemain=0;
+let doneCount=0,notyetCount=0;
+let activeCount=0,nearCount=0,expiredCount=0;
+
+const body=document.getElementById("tableBody");
+
+rows.forEach(row=>{
+
+const cols=row.split(",");
+if(cols[0].trim()!==company)return;
+
+const expired=cols[2].trim();
+const amountPJB=parseNumber(cols[3]);
+const status=cols[4].trim();
+const pjb=cols[5].trim();
+const serial=cols[6].trim();
+const used=parseNumber(cols[7]);
+const remain=parseNumber(cols[8]);
+const statusWaktu=cols[9].trim();
+
+totalPJB+=amountPJB;
+totalUsed+=used;
+totalRemain+=remain;
+
+status==="DONE"?doneCount++:notyetCount++;
+
+if(statusWaktu==="ACTIVE")activeCount++;
+else if(statusWaktu==="NEAR EXPIRED")nearCount++;
+else expiredCount++;
+
+const tr=document.createElement("tr");
+
+tr.dataset.pjb=pjb.toLowerCase();
+tr.dataset.serial=serial.toLowerCase();
+
+tr.innerHTML=`
+<td>${pjb}</td>
+<td>${serial}</td>
+<td>${expired}</td>
+<td>${formatRupiah(remain)}</td>
+<td class="${status==="DONE"?"status-done":"status-notyet"}">${status}</td>
+<td class="${getTimeClass(statusWaktu)}">${statusWaktu}</td>
+`;
+
+body.appendChild(tr);
+
+});
+
+/* UPDATE CARDS */
+totalPJBEl.innerText=formatRupiah(totalPJB);
+totalUsedEl.innerText=formatRupiah(totalUsed);
+totalRemainEl.innerText=formatRupiah(totalRemain);
+
+/* PIE TERPAKAI */
+new Chart(pieChart,{
+type:"pie",
+data:{
+labels:["Terpakai","Tersisa"],
+datasets:[{data:[totalUsed,totalRemain]}]
+},
+options:{
+responsive:true,
+maintainAspectRatio:false,
+animation:{
+animateRotate:true,
+animateScale:true,
+duration:1200
+}
+}
+});
+
+/* BAR CHART GROW FROM BOTTOM */
+new Chart(barChart,{
+type:"bar",
+data:{
+labels:["DONE","NOT YET"],
+datasets:[{
+data:[doneCount,notyetCount],
+backgroundColor:["green","red"]
+}]
+},
+options:{
+responsive:true,
+maintainAspectRatio:false,
+animations:{
+y:{
+from:0,
+duration:1200
+}
+},
+scales:{
+y:{beginAtZero:true}
+}
+}
+});
+
+/* PIE STATUS WAKTU */
+new Chart(timeChart,{
+type:"pie",
+data:{
+labels:["ACTIVE","NEAR EXPIRED","EXPIRED"],
+datasets:[{
+data:[activeCount,nearCount,expiredCount],
+backgroundColor:["green","#e6a700","red"]
+}]
+},
+options:{
+responsive:true,
+maintainAspectRatio:false,
+animation:{
+animateRotate:true,
+animateScale:true,
+duration:1400
+}
+}
+});
+
+/* HIDE LOADING */
+document.getElementById("loadingOverlay").classList.add("hidden");
+
+});
+
+</script>
+
+</body>
+</html>
