@@ -126,30 +126,6 @@ color:red;
 font-weight:bold;
 }
 
-.search-box{
-background:white;
-padding:15px;
-margin-bottom:15px;
-border-radius:8px;
-box-shadow:0 2px 6px rgba(0,0,0,0.1);
-}
-
-.search-input{
-width:100%;
-padding:12px;
-font-size:16px;
-border:1px solid #ccc;
-border-radius:6px;
-}
-
-.highlight{
-background-color:#fff3cd;
-}
-
-.hidden{
-display:none;
-}
-
 </style>
 </head>
 
@@ -202,16 +178,6 @@ display:none;
 <canvas id="timeChart"></canvas>
 </div>
 
-</div>
-
-<div class="search-box">
-<input
-type="text"
-id="searchInput"
-class="search-input"
-placeholder="Cari berdasarkan PJB atau Serial Number..."
-onkeyup="searchTable()"
->
 </div>
 
 <table>
@@ -270,40 +236,6 @@ return "";
 
 }
 
-function searchTable(){
-
-const input=document.getElementById("searchInput").value.toLowerCase();
-
-const rows=document.querySelectorAll("#tableBody tr");
-
-rows.forEach(row=>{
-
-const pjb=row.getAttribute("data-pjb");
-const serial=row.getAttribute("data-serial");
-
-row.classList.remove("highlight");
-
-if(
-pjb.includes(input) ||
-serial.includes(input)
-){
-
-row.style.display="";
-if(input!==""){
-row.classList.add("highlight");
-}
-
-}
-else{
-
-row.style.display="none";
-
-}
-
-});
-
-}
-
 fetch(CSV_URL)
 .then(res=>res.text())
 .then(text=>{
@@ -359,9 +291,6 @@ else if(statusWaktu==="NEAR EXPIRED") nearCount++;
 else if(statusWaktu==="EXPIRED") expiredCount++;
 
 const tr=document.createElement("tr");
-
-tr.setAttribute("data-pjb", pjb.toLowerCase());
-tr.setAttribute("data-serial", serial.toLowerCase());
 
 tr.innerHTML=`
 <td>${pjb}</td>
