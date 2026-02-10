@@ -93,6 +93,7 @@ box-shadow:0 2px 6px rgba(0,0,0,0.1);
 th,td{
 padding:12px;
 border-bottom:1px solid #ddd;
+text-align:left;
 }
 
 th{
@@ -200,32 +201,16 @@ minimumFractionDigits:0
 
 }
 
-/* FIX PARSER ANGKA BENAR */
-function parseNumber(value){
-
-if(!value) return 0;
-
-value=value.replace(/"/g,"").trim();
-
-if(value.includes(",")){
-
-value=value.replace(/,/g,"");
-
-}
-
-return Number(value)||0;
-
-}
-
+/* PARSER CSV SESUAI STRUKTUR SPREADSHEET */
 function parseCSV(text){
 
-const lines=text.split("\n");
+const rows=text.trim().split("\n");
 
 const data=[];
 
-for(let i=1;i<lines.length;i++){
+for(let i=1;i<rows.length;i++){
 
-const cols=lines[i].split(",");
+const cols=rows[i].split(",");
 
 if(cols.length<8) continue;
 
@@ -233,12 +218,12 @@ data.push({
 
 company:cols[0].trim(),
 expired:cols[1].trim(),
-budget:parseNumber(cols[2]),
+amountPJB:Number(cols[2]),
 status:cols[3].trim(),
 pjb:cols[4].trim(),
-sn:cols[5].trim(),
-used:parseNumber(cols[6]),
-remaining:parseNumber(cols[7])
+serialNumber:cols[5].trim(),
+amountUsed:Number(cols[6]),
+amountRemaining:Number(cols[7])
 
 });
 
@@ -252,11 +237,11 @@ fetch(CSV_URL)
 .then(res=>res.text())
 .then(text=>{
 
-const all=parseCSV(text);
+const allData=parseCSV(text);
 
-const filtered=all.filter(x=>x.company===company);
+const filtered=allData.filter(row=>row.company===company);
 
-let totalBudget=0;
+let totalPJB=0;
 let totalUsed=0;
 let totalRemaining=0;
 
@@ -265,31 +250,31 @@ let notYetCount=0;
 
 const tbody=document.getElementById("tableBody");
 
-filtered.forEach(item=>{
+filtered.forEach(row=>{
 
-totalBudget+=item.budget;
-totalUsed+=item.used;
-totalRemaining+=item.remaining;
+totalPJB+=row.amountPJB;
+totalUsed+=row.amountUsed;
+totalRemaining+=row.amountRemaining;
 
-if(item.status==="DONE") doneCount++;
+if(row.status==="DONE") doneCount++;
 else notYetCount++;
 
-const row=document.createElement("tr");
+const tr=document.createElement("tr");
 
-row.innerHTML=`
-<td>${item.pjb}</td>
-<td>${item.sn}</td>
-<td>${item.expired}</td>
-<td>${formatRupiah(item.remaining)}</td>
-<td class="${item.status==="DONE"?"done":"notyet"}">${item.status}</td>
+tr.innerHTML=`
+<td>${row.pjb}</td>
+<td>${row.serialNumber}</td>
+<td>${row.expired}</td>
+<td>${formatRupiah(row.amountRemaining)}</td>
+<td class="${row.status==="DONE"?"done":"notyet"}">${row.status}</td>
 `;
 
-tbody.appendChild(row);
+tbody.appendChild(tr);
 
 });
 
 document.getElementById("totalBudget").textContent=
-formatRupiah(totalBudget);
+formatRupiah(totalPJB);
 
 document.getElementById("totalUsed").textContent=
 formatRupiah(totalUsed);
