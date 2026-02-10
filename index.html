@@ -2,146 +2,115 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fasus Checker</title>
 
-<title>Cek Budget Fasus</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
 
-body{
-margin:0;
-font-family:Arial;
-background:#000;
-color:white;
-background-image:url("./background.jpg");
-background-size:cover;
-background-position:center;
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: url('background.jpg') no-repeat center center fixed;
+    background-size: cover;
 }
 
-.overlay{
-background:rgba(0,0,0,0.65);
-width:100%;
-height:100vh;
-display:flex;
-flex-direction:column;
-justify-content:center;
-align-items:center;
-position:relative;
+.overlay {
+    background: rgba(0,0,0,0.55);
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
-.logoContainer{
-position:absolute;
-top:25px;
-left:50%;
-transform:translateX(-50%);
-display:flex;
-flex-direction:column;
-align-items:center;
-gap:10px;
+.logo-container {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    padding: 20px 40px;
 }
 
-.logoUT{
-height:70px;
+.logo-container img {
+    height: 60px;
 }
 
-.logoInsan{
-height:40px;
+.center-box {
+    margin-top: 120px;
+    background: white;
+    padding: 40px;
+    border-radius: 10px;
+    width: 400px;
+    text-align: center;
 }
 
-.title{
-font-size:48px;
-font-weight:bold;
-margin-bottom:30px;
-text-align:center;
+.title {
+    font-size: 24px;
+    margin-bottom: 20px;
+    font-weight: bold;
 }
 
-.searchBox{
-display:flex;
-gap:10px;
-position:relative;
+input {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
 }
 
-input{
-width:400px;
-padding:15px;
-font-size:18px;
-border-radius:8px;
-border:none;
-outline:none;
+button {
+    margin-top: 15px;
+    padding: 12px;
+    width: 100%;
+    font-size: 16px;
+    background: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
 }
 
-button{
-padding:15px 25px;
-font-size:18px;
-background:#FFD100;
-border:none;
-border-radius:8px;
-cursor:pointer;
-font-weight:bold;
+button:hover {
+    background: #0056b3;
 }
 
-button:hover{
-background:#ffcc00;
+.suggestions {
+    background: white;
+    border: 1px solid #ccc;
+    max-height: 150px;
+    overflow-y: auto;
+    text-align: left;
 }
 
-.suggest{
-position:absolute;
-top:60px;
-left:0;
-background:white;
-color:black;
-width:400px;
-border-radius:8px;
-overflow:hidden;
-z-index:999;
-max-height:250px;
-overflow-y:auto;
+.suggestion-item {
+    padding: 10px;
+    cursor: pointer;
 }
 
-.suggest div{
-padding:10px;
-cursor:pointer;
-}
-
-.suggest div:hover{
-background:#eee;
+.suggestion-item:hover {
+    background: #eee;
 }
 
 </style>
 
 </head>
-
 <body>
 
 <div class="overlay">
 
-<div class="logoContainer">
-
-<img src="./logo-ut.png" class="logoUT">
-
-<img src="./logo-insan.png" class="logoInsan">
-
+<div class="logo-container">
+<img src="logo-ut.png">
+<img src="logo-insan.png">
 </div>
+
+<div class="center-box">
 
 <div class="title">
-CEK BUDGET FASUS
+Fasus Budget Checker
 </div>
 
-<div class="searchBox">
+<input type="text" id="searchInput" placeholder="Ketik nama perusahaan...">
 
-<div>
+<div id="suggestions" class="suggestions"></div>
 
-<input id="input"
-placeholder="Ketik nama perusahaan..."
-autocomplete="off">
-
-<div id="suggest" class="suggest"></div>
-
-</div>
-
-<button onclick="checkFasus()">
-Check
-</button>
+<button onclick="checkCompany()">Check</button>
 
 </div>
 
@@ -149,114 +118,88 @@ Check
 
 <script>
 
-const sheetURL =
-"https://docs.google.com/spreadsheets/d/e/2PACX-1vTbJYRkPPTPDYHrDTy-eA_e5rUZ_VowdvBDjHU0BD7rKTvHIZfZAQf_ctl8qDkpiGYVnr9qARdX4fZ6/pub?output=csv";
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTbJYRkPPTPDYHrDTy-eA_e5rUZ_VowdvBDjHU0BD7rKTvHIZfZAQf_ctl8qDkpiGYVnr9qARdX4fZ6/pub?output=csv";
 
-let fasusList = [];
+let companies = [];
+let selectedCompany = "";
 
-fetch(sheetURL)
-.then(res=>res.text())
-.then(text=>{
+fetch(CSV_URL)
+.then(response => response.text())
+.then(data => {
 
-const rows = text.split(/\r?\n/);
+    const rows = data.split("\n");
 
-for(let i=1;i<rows.length;i++){
+    const companySet = new Set();
 
-let row = rows[i].trim();
+    for (let i = 1; i < rows.length; i++) {
 
-if(!row) continue;
+        const cols = rows[i].split(",");
 
-let cols = row.split(",");
+        const company = cols[0];
 
-let name = cols[0];
+        if (company) {
+            companySet.add(company.trim());
+        }
+    }
 
-if(!name) continue;
-
-name = name.replace(/"/g,"").trim();
-
-if(name && !fasusList.includes(name))
-fasusList.push(name);
-
-}
-
-fasusList.sort();
-
-console.log("Loaded:", fasusList);
-
-})
-.catch(err=>{
-console.error(err);
-});
-
-const input =
-document.getElementById("input");
-
-const suggest =
-document.getElementById("suggest");
-
-input.addEventListener("input", function(){
-
-const value =
-this.value.toLowerCase().trim();
-
-suggest.innerHTML="";
-
-if(!value) return;
-
-const filtered =
-fasusList.filter(f =>
-f.toLowerCase().includes(value)
-);
-
-filtered.slice(0,5).forEach(f=>{
-
-const div =
-document.createElement("div");
-
-div.innerText=f;
-
-div.onclick=function(){
-
-input.value=f;
-
-suggest.innerHTML="";
-
-};
-
-suggest.appendChild(div);
+    companies = Array.from(companySet);
 
 });
 
+const input = document.getElementById("searchInput");
+const suggestions = document.getElementById("suggestions");
+
+input.addEventListener("input", function() {
+
+    const value = this.value.toLowerCase();
+
+    suggestions.innerHTML = "";
+
+    if (!value) return;
+
+    const filtered = companies.filter(c =>
+        c.toLowerCase().includes(value)
+    );
+
+    filtered.forEach(company => {
+
+        const div = document.createElement("div");
+
+        div.classList.add("suggestion-item");
+
+        div.innerText = company;
+
+        div.onclick = function() {
+
+            input.value = company;
+
+            selectedCompany = company;
+
+            suggestions.innerHTML = "";
+
+        };
+
+        suggestions.appendChild(div);
+
+    });
+
 });
 
-function checkFasus(){
+function checkCompany() {
 
-const fasus =
-input.value.trim();
+    const company = input.value;
 
-if(!fasus){
+    if (!company) {
+        alert("Pilih perusahaan terlebih dahulu");
+        return;
+    }
 
-alert("Masukkan nama perusahaan");
+    const encoded = encodeURIComponent(company);
 
-return;
-
-}
-
-window.location.href =
-"fasus-dashboard.html?fasus="+
-encodeURIComponent(fasus);
+    window.location.href =
+        "fasus-dashboard.html?company=" + encoded;
 
 }
-
-document.addEventListener("click", function(e){
-
-if(!e.target.closest(".searchBox")){
-
-suggest.innerHTML="";
-
-}
-
-});
 
 </script>
 
