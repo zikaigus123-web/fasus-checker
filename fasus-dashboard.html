@@ -233,19 +233,19 @@ const pemilik=cols[0]?.trim();
 
 if(pemilik!==company) return;
 
-const expired=cols[1]?.trim();
+const expired=cols[2]?.trim();
 
-const amountPJB=parseNumber(cols[2]);
+const amountPJB=parseNumber(cols[3]);
 
-const status=cols[3]?.trim();
+const status=cols[4]?.trim();
 
-const pjb=cols[4]?.trim();
+const pjb=cols[5]?.trim();
 
-const serial=cols[5]?.trim();
+const serial=cols[6]?.trim();
 
-const used=parseNumber(cols[6]);
+const used=parseNumber(cols[7]);
 
-const remain=parseNumber(cols[7]);
+const remain=parseNumber(cols[8]);
 
 totalPJB+=amountPJB;
 
