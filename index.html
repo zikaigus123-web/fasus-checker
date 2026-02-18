@@ -7,6 +7,7 @@
 
 <title>Fasus Budget Checker</title>
 
+<!-- FAVICON WEBSITE -->
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <link rel="shortcut icon" href="favicon.ico">
 <link rel="apple-touch-icon" href="favicon.ico">
@@ -115,50 +116,6 @@ cursor:pointer;
 background:#eee;
 }
 
-/* MOBILE */
-
-@media (max-width:768px){
-
-.logo-ut{
-right:20px;
-top:15px;
-height:32px;
-}
-
-.logo-insani{
-height:35px;
-bottom:15px;
-}
-
-.center-container{
-width:90%;
-}
-
-.title{
-font-size:28px;
-}
-
-.search-wrapper{
-flex-direction:column;
-align-items:center;
-}
-
-.search-box{
-width:100%;
-max-width:320px;
-}
-
-#searchInput{
-width:100%;
-}
-
-button{
-width:100%;
-max-width:200px;
-}
-
-}
-
 </style>
 
 </head>
@@ -199,33 +156,27 @@ autocomplete="off"
 
 <script>
 
-const CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vQUKPRwONIwVc0snCr28PWvOKCyRJUf_J4mMEP2qGXFzrhFW_u9NbjlnHnWLXQdnNmZbtkVfAxOQnw9/pub?gid=1748464450&single=true&output=csv";
+const CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vTbJYRkPPTPDYHrDTy-eA_e5rUZ_VowdvBDjHU0BD7rKTvHIZfZAQf_ctl8qDkpiGYVnr9qARdX4fZ6/pub?gid=1924167205&single=true&output=csv";
 
 let companies=[];
 
 const input=document.getElementById("searchInput");
 const suggestionBox=document.getElementById("suggestions");
 
-/* PARSE CSV SESUAI STRUKTUR SPREADSHEET */
+/* CSV parser aman */
 function parseCSV(text){
 
 const lines=text.split("\n");
 
 const result=[];
 
-for(let i=6;i<lines.length;i++){
-
-const line=lines[i];
+for(let line of lines){
 
 if(line.trim()==="") continue;
 
-const cols=line.split(",");
+const firstColumn=line.split(/,(.+)/)[0];
 
-const company=cols[1]; // kolom Pemilik Fasus
-
-if(company){
-result.push(company.trim());
-}
+result.push(firstColumn.trim());
 
 }
 
@@ -233,20 +184,20 @@ return result;
 
 }
 
-/* LOAD DATA */
+/* load data */
 fetch(CSV_URL)
 .then(res=>res.text())
 .then(text=>{
 
 const parsed=parseCSV(text);
 
-const unique=new Set(parsed);
+const unique=new Set(parsed.slice(1));
 
 companies=Array.from(unique).sort();
 
 });
 
-/* SUGGESTION */
+/* suggestion */
 input.addEventListener("input",function(){
 
 const value=this.value.toLowerCase();
@@ -255,8 +206,8 @@ suggestionBox.innerHTML="";
 
 if(!value) return;
 
-const filtered=companies.filter(company=>
-company.toLowerCase().includes(value)
+const filtered=companies.filter(c=>
+c.toLowerCase().includes(value)
 );
 
 filtered.forEach(company=>{
@@ -270,6 +221,7 @@ div.textContent=company;
 div.onclick=function(){
 
 input.value=company;
+
 suggestionBox.innerHTML="";
 
 };
@@ -280,7 +232,7 @@ suggestionBox.appendChild(div);
 
 });
 
-/* REDIRECT */
+/* redirect */
 function checkCompany(){
 
 const company=input.value.trim();
@@ -298,7 +250,7 @@ window.location.href=
 
 }
 
-/* KLIK LUAR */
+/* klik luar */
 document.addEventListener("click",function(e){
 
 if(!e.target.closest(".search-box")){
