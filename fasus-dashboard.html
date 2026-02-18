@@ -147,10 +147,13 @@ border-radius:6px;
 background-color:#fff3cd;
 }
 
+/* card total search */
+#searchTotalCard{
+border-left:5px solid #007bff;
+}
 
 /* ======================================
    MOBILE RESPONSIVE FIX
-   TIDAK MENGUBAH CODE ASLI
 ====================================== */
 
 @media (max-width:768px){
@@ -260,6 +263,15 @@ padding:8px;
 
 </div>
 
+<!-- CARD TOTAL BERDASARKAN SEARCH -->
+<div class="cards">
+<div class="card" id="searchTotalCard" style="display:none;">
+<div class="card-title" id="searchTotalTitle">Total nomor PJB</div>
+<div class="card-value" id="searchTotalValue">Rp 0</div>
+</div>
+</div>
+
+
 <div class="charts">
 
 <div class="chart-box">
@@ -344,6 +356,48 @@ if(status==="EXPIRED") return "time-expired";
 return "";
 }
 
+/* UPDATE TOTAL BERDASARKAN SEARCH */
+function updateSearchTotal(){
+
+const input=document.getElementById("searchInput").value.toLowerCase();
+const rows=document.querySelectorAll("#tableBody tr");
+
+let total=0;
+let foundPJB="";
+
+rows.forEach(row=>{
+
+if(row.style.display==="none") return;
+
+const pjb=row.getAttribute("data-pjb");
+
+if(!foundPJB) foundPJB=pjb;
+
+const remainText=row.children[3].innerText;
+const remain=parseNumber(remainText);
+
+total+=remain;
+
+});
+
+const card=document.getElementById("searchTotalCard");
+
+if(input===""){
+card.style.display="none";
+return;
+}
+
+document.getElementById("searchTotalTitle").innerText=
+"Total nomor PJB "+foundPJB;
+
+document.getElementById("searchTotalValue").innerText=
+formatRupiah(total);
+
+card.style.display="block";
+
+}
+
+/* SEARCH */
 function searchTable(){
 
 const input=document.getElementById("searchInput").value.toLowerCase();
@@ -364,6 +418,9 @@ row.style.display="none";
 }
 
 });
+
+updateSearchTotal();
+
 }
 
 async function loadDashboard(){
