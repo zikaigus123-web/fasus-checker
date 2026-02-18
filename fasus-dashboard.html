@@ -439,7 +439,7 @@ document.getElementById("companyName").innerText=company;
 document.getElementById("updated").innerText=
 "Last updated: "+new Date().toLocaleString("id-ID");
 
-const rows=text.split("\n").slice(1);
+const rows=text.split("\n").slice(1).filter(r=>r.trim()!=="");
 
 let totalPJB=0,totalUsed=0,totalRemain=0;
 let doneCount=0,notyetCount=0;
@@ -454,14 +454,22 @@ const cols=row.split(",");
 
 if(cols[0]?.trim()!==company) return;
 
-const expired=cols[6];
-const amountPJB=parseNumber(cols[7]);
-const status=cols[8];
-const pjb=cols[9];
-const serial=cols[10];
-const used=parseNumber(cols[13]);
-const remain=parseNumber(cols[14]);
-const statusWaktu=cols[23];
+const expired=cols[3];
+const amountPJB=parseNumber(cols[4]);
+const status=cols[5];
+const pjb=cols[6];
+const serial=cols[7];
+const used=parseNumber(cols[10]);
+const remain=parseNumber(cols[11]);
+
+/* hitung status waktu dari expired date */
+const today=new Date();
+const expDate=new Date(expired.split("/").reverse().join("-"));
+const diff=(expDate-today)/(1000*60*60*24);
+
+let statusWaktu="ACTIVE";
+if(diff<0) statusWaktu="EXPIRED";
+else if(diff<=90) statusWaktu="NEAR EXPIRED";
 
 totalPJB+=amountPJB;
 totalUsed+=used;
