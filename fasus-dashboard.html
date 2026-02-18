@@ -255,7 +255,19 @@ async function load(){
 const res=await fetch(CSV_URL+"&t="+Date.now());
 const text=await res.text();
 
-const rows=text.split("\n").slice(5);
+const lines=text.split("\n");
+
+/* HEADER ADA DI ROW 5 */
+const header=lines[4].split(",");
+
+/* DATA MULAI ROW 6 */
+const rows=lines.slice(5);
+
+const col={};
+
+header.forEach((name,index)=>{
+col[name.trim()]=index;
+});
 
 const company=getCompany();
 
@@ -280,15 +292,15 @@ rows.forEach(row=>{
 
 const c=row.split(",");
 
-if(c[0]!=company)return;
+if(c[col["Pemilik Fasus"]]!==company)return;
 
-const expiredDate=c[1];
-const amountPJB=parse(c[2]);
-const status=c[3];
-const pjb=c[4];
-const serial=c[5];
-const used=parse(c[8]);
-const remain=parse(c[9]);
+const expiredDate=c[col["Expired Date"]];
+const amountPJB=parse(c[col["Amount PJB"]]);
+const status=c[col["Status Utilisasi Fasus"]];
+const pjb=c[col["PJB"]];
+const serial=c[col["Serial Number"]];
+const used=parse(c[col["Amount Terpakai"]]);
+const remain=parse(c[col["Sisa Budget PJB"]]);
 
 const statusWaktu=getStatusWaktu(expiredDate);
 
@@ -323,13 +335,22 @@ document.getElementById("totalUsed").innerText=format(totalUsed);
 document.getElementById("totalRemain").innerText=format(totalRemain);
 
 if(pieChart)pieChart.destroy();
-pieChart=new Chart(pieChart,{type:"pie",data:{labels:["Terpakai","Sisa"],datasets:[{data:[totalUsed,totalRemain]}]}});
+pieChart=new Chart(document.getElementById("pieChart"),{
+type:"pie",
+data:{labels:["Terpakai","Sisa"],datasets:[{data:[totalUsed,totalRemain]}]}
+});
 
 if(barChart)barChart.destroy();
-barChart=new Chart(barChart,{type:"bar",data:{labels:["DONE","NOT YET"],datasets:[{data:[done,notyet],backgroundColor:["green","red"]}]}});
+barChart=new Chart(document.getElementById("barChart"),{
+type:"bar",
+data:{labels:["DONE","NOT YET"],datasets:[{data:[done,notyet],backgroundColor:["green","red"]}]}
+});
 
 if(timeChart)timeChart.destroy();
-timeChart=new Chart(timeChart,{type:"pie",data:{labels:["ACTIVE","NEAR EXPIRED","EXPIRED"],datasets:[{data:[active,near,expired],backgroundColor:["green","orange","red"]}]}});
+timeChart=new Chart(document.getElementById("timeChart"),{
+type:"pie",
+data:{labels:["ACTIVE","NEAR EXPIRED","EXPIRED"],datasets:[{data:[active,near,expired],backgroundColor:["green","orange","red"]}]}
+});
 
 }
 
