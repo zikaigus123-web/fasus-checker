@@ -448,15 +448,15 @@ rows.forEach(row=>{
 
 const cols=row.split(",");
 
-if(cols[0]?.trim()!==company) return;
+if(cols[1]?.trim()!==company) return;
 
-const expired=cols[2];
-const amountPJB=parseNumber(cols[3]);
-const status=cols[4];
-const pjb=cols[5];
-const serial=cols[6];
-const used=parseNumber(cols[7]);
-const remain=parseNumber(cols[8]);
+const expired=cols[4];
+const amountPJB=parseNumber(cols[5]);
+const status=cols[6];
+const pjb=cols[7];
+const serial=cols[8];
+const used=parseNumber(cols[11]);
+const remain=parseNumber(cols[12]);
 
 const statusWaktu=getStatusWaktu(expired);
 
