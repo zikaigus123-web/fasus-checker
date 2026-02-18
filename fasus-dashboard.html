@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>Fasus Budget Dashboard</title>
 
-<link rel="icon" href="favicon.ico">
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -94,6 +94,7 @@ border-collapse:collapse;
 th{
 background:#eee;
 padding:12px;
+text-align:left;
 }
 
 td{
@@ -117,7 +118,7 @@ font-weight:bold;
 }
 
 .time-near{
-color:orange;
+color:#e6a700;
 font-weight:bold;
 }
 
@@ -131,16 +132,104 @@ background:white;
 padding:15px;
 margin-bottom:15px;
 border-radius:8px;
+box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
 
 .search-input{
 width:100%;
 padding:12px;
 font-size:16px;
+border:1px solid #ccc;
+border-radius:6px;
+}
+
+.highlight{
+background-color:#fff3cd;
+}
+
+/* card total search */
+#searchTotalCard{
+border-left:5px solid #007bff;
+}
+
+/* ======================================
+   MOBILE RESPONSIVE FIX
+====================================== */
+
+@media (max-width:768px){
+
+.header{
+flex-direction:column;
+gap:10px;
+text-align:center;
+padding:15px;
+}
+
+.logo{
+height:32px;
+}
+
+.container{
+padding:15px;
+}
+
+.company{
+font-size:22px;
+text-align:center;
+word-break:break-word;
+}
+
+.updated{
+font-size:13px;
+text-align:center;
+}
+
+.cards{
+flex-direction:column;
+gap:12px;
+}
+
+.card{
+padding:15px;
+}
+
+.card-value{
+font-size:22px;
+}
+
+.charts{
+flex-direction:column;
+gap:15px;
+}
+
+.chart-box{
+height:280px;
+padding:15px;
+}
+
+.search-box{
+padding:12px;
+}
+
+.search-input{
+font-size:16px;
+padding:12px;
+}
+
+table{
+font-size:13px;
+display:block;
+overflow-x:auto;
+white-space:nowrap;
+}
+
+th, td{
+padding:8px;
+}
+
 }
 
 </style>
-
 </head>
 
 <body>
@@ -152,8 +241,8 @@ font-size:16px;
 
 <div class="container">
 
-<div id="companyName" class="company"></div>
-<div id="updated" class="updated"></div>
+<div class="company" id="companyName"></div>
+<div class="updated" id="updated"></div>
 
 <div class="cards">
 
@@ -174,6 +263,15 @@ font-size:16px;
 
 </div>
 
+<!-- CARD TOTAL BERDASARKAN SEARCH -->
+<div class="cards">
+<div class="card" id="searchTotalCard" style="display:none;">
+<div class="card-title" id="searchTotalTitle">Total nomor PJB</div>
+<div class="card-value" id="searchTotalValue">Rp 0</div>
+</div>
+</div>
+
+
 <div class="charts">
 
 <div class="chart-box">
@@ -184,7 +282,11 @@ font-size:16px;
 <canvas id="barChart"></canvas>
 </div>
 
-<div class="chart-box">
+</div>
+
+<div class="charts">
+
+<div class="chart-box" style="height:300px;max-width:400px;margin:auto;">
 <canvas id="timeChart"></canvas>
 </div>
 
@@ -192,9 +294,10 @@ font-size:16px;
 
 <div class="search-box">
 <input
+type="text"
 id="searchInput"
 class="search-input"
-placeholder="Cari PJB atau Serial Number"
+placeholder="Cari berdasarkan PJB atau Serial Number..."
 onkeyup="searchTable()"
 >
 </div>
@@ -220,40 +323,81 @@ onkeyup="searchTable()"
 
 <script>
 
-const CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vQUKPRwONIwVc0snCr28PWvOKCyRJUf_J4mMEP2qGXFzrhFW_u9NbjlnHnWLXQdnNmZbtkVfAxOQnw9/pub?gid=1324873592&single=true&output=csv";
+const BASE_CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vTbJYRkPPTPDYHrDTy-eA_e5rUZ_VowdvBDjHU0BD7rKTvHIZfZAQf_ctl8qDkpiGYVnr9qARdX4fZ6/pub?gid=1924167205&single=true&output=csv";
 
-let pieChart=null;
-let barChart=null;
-let timeChart=null;
+let pieChartInstance=null;
+let barChartInstance=null;
+let timeChartInstance=null;
 
-function getCompany(){
-return new URLSearchParams(location.search).get("company");
+let isLoading=false;
+
+function getCSVUrl(){
+return BASE_CSV_URL+"&t="+Date.now();
 }
 
-function format(num){
+function formatRupiah(num){
 return "Rp "+num.toLocaleString("id-ID");
 }
 
-function parse(num){
-if(!num) return 0;
-return Number(
-num.replace(/Rp/g,"")
-.replace(/\./g,"")
-.replace(/,/g,"")
-.trim()
-);
+function getCompany(){
+const params=new URLSearchParams(window.location.search);
+return params.get("company");
+}
+
+function parseNumber(str){
+if(!str) return 0;
+return parseFloat(str.replace(/Rp/g,"").replace(/\./g,"").replace(/,/g,"").trim())||0;
 }
 
 function getTimeClass(status){
-
 if(status==="ACTIVE") return "time-active";
 if(status==="NEAR EXPIRED") return "time-near";
 if(status==="EXPIRED") return "time-expired";
-
 return "";
+}
+
+/* UPDATE TOTAL BERDASARKAN SEARCH */
+function updateSearchTotal(){
+
+const input=document.getElementById("searchInput").value.toLowerCase();
+const rows=document.querySelectorAll("#tableBody tr");
+
+let total=0;
+let foundPJB="";
+
+rows.forEach(row=>{
+
+if(row.style.display==="none") return;
+
+const pjb=row.getAttribute("data-pjb");
+
+if(!foundPJB) foundPJB=pjb;
+
+const remainText=row.children[3].innerText;
+const remain=parseNumber(remainText);
+
+total+=remain;
+
+});
+
+const card=document.getElementById("searchTotalCard");
+
+if(input===""){
+card.style.display="none";
+return;
+}
+
+document.getElementById("searchTotalTitle").innerText=
+"Total nomor PJB "+foundPJB;
+
+document.getElementById("searchTotalValue").innerText=
+formatRupiah(total);
+
+card.style.display="block";
 
 }
 
+/* SEARCH */
 function searchTable(){
 
 const input=document.getElementById("searchInput").value.toLowerCase();
@@ -261,25 +405,33 @@ const rows=document.querySelectorAll("#tableBody tr");
 
 rows.forEach(row=>{
 
-const pjb=row.dataset.pjb;
-const serial=row.dataset.serial;
+const pjb=row.getAttribute("data-pjb");
+const serial=row.getAttribute("data-serial");
+
+row.classList.remove("highlight");
 
 if(pjb.includes(input)||serial.includes(input)){
 row.style.display="";
+if(input!=="") row.classList.add("highlight");
 }else{
 row.style.display="none";
 }
 
 });
 
+updateSearchTotal();
+
 }
 
-async function load(){
+async function loadDashboard(){
 
-const res=await fetch(CSV_URL+"&t="+Date.now());
-const text=await res.text();
+if(isLoading) return;
+isLoading=true;
 
-const rows=text.split("\n").slice(1);
+try{
+
+const response=await fetch(getCSVUrl(),{cache:"no-store"});
+const text=await response.text();
 
 const company=getCompany();
 
@@ -287,121 +439,88 @@ document.getElementById("companyName").innerText=company;
 document.getElementById("updated").innerText=
 "Last updated: "+new Date().toLocaleString("id-ID");
 
-let totalPJB=0;
-let totalUsed=0;
-let totalRemain=0;
+const rows=text.split("\n").slice(1);
 
-let done=0;
-let notyet=0;
+let totalPJB=0,totalUsed=0,totalRemain=0;
+let doneCount=0,notyetCount=0;
+let activeCount=0,nearCount=0,expiredCount=0;
 
-let active=0;
-let near=0;
-let expired=0;
-
-const tbody=document.getElementById("tableBody");
-tbody.innerHTML="";
+const body=document.getElementById("tableBody");
+body.innerHTML="";
 
 rows.forEach(row=>{
 
-const c=row.split(",");
+const cols=row.split(",");
 
-if(c[0]?.trim()!==company) return;
+if(cols[0]?.trim()!==company) return;
 
-const expiredDate=c[1];
-const amountPJB=parse(c[3]);
-const status=c[4];
-const pjb=c[5];
-const serial=c[6];
-const used=parse(c[7]);
-const remain=parse(c[8]);
-const statusWaktu=c[9];
+const expired=cols[2];
+const amountPJB=parseNumber(cols[3]);
+const status=cols[4];
+const pjb=cols[5];
+const serial=cols[6];
+const used=parseNumber(cols[7]);
+const remain=parseNumber(cols[8]);
+const statusWaktu=cols[9];
 
 totalPJB+=amountPJB;
 totalUsed+=used;
 totalRemain+=remain;
 
-if(status==="DONE") done++;
-else notyet++;
+if(status==="DONE") doneCount++;
+else notyetCount++;
 
-if(statusWaktu==="ACTIVE") active++;
-else if(statusWaktu==="NEAR EXPIRED") near++;
-else expired++;
+if(statusWaktu==="ACTIVE") activeCount++;
+else if(statusWaktu==="NEAR EXPIRED") nearCount++;
+else if(statusWaktu==="EXPIRED") expiredCount++;
 
 const tr=document.createElement("tr");
 
-tr.dataset.pjb=pjb.toLowerCase();
-tr.dataset.serial=serial.toLowerCase();
+tr.setAttribute("data-pjb",pjb.toLowerCase());
+tr.setAttribute("data-serial",serial.toLowerCase());
 
 tr.innerHTML=`
 <td>${pjb}</td>
 <td>${serial}</td>
-<td>${expiredDate}</td>
-<td>${format(remain)}</td>
+<td>${expired}</td>
+<td>${formatRupiah(remain)}</td>
 <td class="${status==="DONE"?"status-done":"status-notyet"}">${status}</td>
 <td class="${getTimeClass(statusWaktu)}">${statusWaktu}</td>
 `;
 
-tbody.appendChild(tr);
+body.appendChild(tr);
 
 });
 
-document.getElementById("totalPJB").innerText=format(totalPJB);
-document.getElementById("totalUsed").innerText=format(totalUsed);
-document.getElementById("totalRemain").innerText=format(totalRemain);
+document.getElementById("totalPJB").innerText=formatRupiah(totalPJB);
+document.getElementById("totalUsed").innerText=formatRupiah(totalUsed);
+document.getElementById("totalRemain").innerText=formatRupiah(totalRemain);
 
-if(pieChart) pieChart.destroy();
+if(pieChartInstance) pieChartInstance.destroy();
+pieChartInstance=new Chart(pieChart,{type:"pie",data:{labels:["Terpakai","Tersisa"],datasets:[{data:[totalUsed,totalRemain]}]},options:{responsive:true,maintainAspectRatio:false}});
 
-pieChart=new Chart(
-document.getElementById("pieChart"),
-{
-type:"pie",
-data:{
-labels:["Terpakai","Sisa"],
-datasets:[{
-data:[totalUsed,totalRemain],
-backgroundColor:["#007bff","#28a745"]
-}]
-}
-}
-);
+if(barChartInstance) barChartInstance.destroy();
+barChartInstance=new Chart(barChart,{type:"bar",data:{labels:["DONE","NOT YET"],datasets:[{data:[doneCount,notyetCount],backgroundColor:["green","red"]}]},options:{responsive:true,maintainAspectRatio:false}});
 
-if(barChart) barChart.destroy();
+if(timeChartInstance) timeChartInstance.destroy();
+timeChartInstance=new Chart(timeChart,{type:"pie",data:{labels:["ACTIVE","NEAR EXPIRED","EXPIRED"],datasets:[{data:[activeCount,nearCount,expiredCount],backgroundColor:["green","#e6a700","red"]}]},options:{responsive:true,maintainAspectRatio:false}});
 
-barChart=new Chart(
-document.getElementById("barChart"),
-{
-type:"bar",
-data:{
-labels:["DONE","NOT YET"],
-datasets:[{
-data:[done,notyet],
-backgroundColor:["green","red"]
-}]
-}
-}
-);
-
-if(timeChart) timeChart.destroy();
-
-timeChart=new Chart(
-document.getElementById("timeChart"),
-{
-type:"pie",
-data:{
-labels:["ACTIVE","NEAR EXPIRED","EXPIRED"],
-datasets:[{
-data:[active,near,expired],
-backgroundColor:["green","orange","red"]
-}]
-}
-}
-);
-
+}catch(e){
+console.error(e);
 }
 
-load();
+isLoading=false;
+}
 
-setInterval(load,60000);
+loadDashboard();
+setInterval(loadDashboard,60000);
+
+document.addEventListener("visibilitychange",function(){
+if(!document.hidden) loadDashboard();
+});
+
+window.addEventListener("focus",loadDashboard);
+window.addEventListener("pageshow",loadDashboard);
 
 </script>
 
