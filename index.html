@@ -1,13 +1,12 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-   
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>Fasus Budget Checker</title>
 
-<!-- FAVICON WEBSITE -->
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <link rel="shortcut icon" href="favicon.ico">
 <link rel="apple-touch-icon" href="favicon.ico">
@@ -116,11 +115,7 @@ cursor:pointer;
 background:#eee;
 }
 
-
-/* ======================================
-   MOBILE RESPONSIVE FIX
-   TIDAK MENGUBAH CODE ASLI
-====================================== */
+/* MOBILE */
 
 @media (max-width:768px){
 
@@ -137,20 +132,15 @@ bottom:15px;
 
 .center-container{
 width:90%;
-padding:0 10px;
 }
 
 .title{
 font-size:28px;
-margin-bottom:20px;
-line-height:1.2;
 }
 
 .search-wrapper{
 flex-direction:column;
 align-items:center;
-gap:12px;
-width:100%;
 }
 
 .search-box{
@@ -160,19 +150,11 @@ max-width:320px;
 
 #searchInput{
 width:100%;
-font-size:16px;
-padding:12px;
 }
 
 button{
 width:100%;
 max-width:200px;
-padding:12px;
-font-size:16px;
-}
-
-.suggestions{
-width:100%;
 }
 
 }
@@ -224,20 +206,26 @@ let companies=[];
 const input=document.getElementById("searchInput");
 const suggestionBox=document.getElementById("suggestions");
 
-/* CSV parser aman */
+/* PARSE CSV SESUAI STRUKTUR SPREADSHEET */
 function parseCSV(text){
 
 const lines=text.split("\n");
 
 const result=[];
 
-for(let line of lines){
+for(let i=6;i<lines.length;i++){
+
+const line=lines[i];
 
 if(line.trim()==="") continue;
 
-const firstColumn=line.split(/,(.+)/)[2];
+const cols=line.split(",");
 
-result.push(firstColumn.trim());
+const company=cols[1]; // kolom Pemilik Fasus
+
+if(company){
+result.push(company.trim());
+}
 
 }
 
@@ -245,20 +233,20 @@ return result;
 
 }
 
-/* load data */
+/* LOAD DATA */
 fetch(CSV_URL)
 .then(res=>res.text())
 .then(text=>{
 
 const parsed=parseCSV(text);
 
-const unique=new Set(parsed.slice(5));
+const unique=new Set(parsed);
 
 companies=Array.from(unique).sort();
 
 });
 
-/* suggestion */
+/* SUGGESTION */
 input.addEventListener("input",function(){
 
 const value=this.value.toLowerCase();
@@ -267,8 +255,8 @@ suggestionBox.innerHTML="";
 
 if(!value) return;
 
-const filtered=companies.filter(c=>
-c.toLowerCase().includes(value)
+const filtered=companies.filter(company=>
+company.toLowerCase().includes(value)
 );
 
 filtered.forEach(company=>{
@@ -282,7 +270,6 @@ div.textContent=company;
 div.onclick=function(){
 
 input.value=company;
-
 suggestionBox.innerHTML="";
 
 };
@@ -293,7 +280,7 @@ suggestionBox.appendChild(div);
 
 });
 
-/* redirect */
+/* REDIRECT */
 function checkCompany(){
 
 const company=input.value.trim();
@@ -311,7 +298,7 @@ window.location.href=
 
 }
 
-/* klik luar */
+/* KLIK LUAR */
 document.addEventListener("click",function(e){
 
 if(!e.target.closest(".search-box")){
