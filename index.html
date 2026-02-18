@@ -7,7 +7,6 @@
 
 <title>Fasus Budget Checker</title>
 
-<!-- FAVICON WEBSITE -->
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <link rel="shortcut icon" href="favicon.ico">
 <link rel="apple-touch-icon" href="favicon.ico">
@@ -156,6 +155,7 @@ autocomplete="off"
 
 <script>
 
+/* CSV WEBSITE ANDA */
 const CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vQUKPRwONIwVc0snCr28PWvOKCyRJUf_J4mMEP2qGXFzrhFW_u9NbjlnHnWLXQdnNmZbtkVfAxOQnw9/pub?gid=1324873592&single=true&output=csv";
 
 let companies=[];
@@ -163,20 +163,34 @@ let companies=[];
 const input=document.getElementById("searchInput");
 const suggestionBox=document.getElementById("suggestions");
 
-/* CSV parser aman */
+/* PARSER FINAL SESUAI STRUCTURE SPREADSHEET */
 function parseCSV(text){
 
 const lines=text.split("\n");
 
 const result=[];
 
-for(let line of lines){
+/* 
+Row spreadsheet Anda:
+Row 1-5 = Judul dan keterangan
+Row 6 = Header tabel
+Row 7+ = DATA
+*/
 
-if(line.trim()==="") continue;
+for(let i=6;i<lines.length;i++){
 
-const firstColumn=line.split(/,(.+)/)[0];
+const line=lines[i];
 
-result.push(firstColumn.trim());
+if(!line || line.trim()==="") continue;
+
+const cols=line.split(",");
+
+/* Kolom B = Pemilik Fasus */
+const company=cols[1];
+
+if(company && company.trim()!==""){
+result.push(company.trim());
+}
 
 }
 
@@ -184,20 +198,21 @@ return result;
 
 }
 
-/* load data */
-fetch(CSV_URL)
+/* LOAD DATA */
+fetch(CSV_URL+"?t="+Date.now())
 .then(res=>res.text())
 .then(text=>{
 
 const parsed=parseCSV(text);
 
-const unique=new Set(parsed.slice(1));
+/* Hapus duplikat */
+const unique=[...new Set(parsed)];
 
-companies=Array.from(unique).sort();
+companies=unique.sort();
 
 });
 
-/* suggestion */
+/* SUGGESTION */
 input.addEventListener("input",function(){
 
 const value=this.value.toLowerCase();
@@ -206,8 +221,8 @@ suggestionBox.innerHTML="";
 
 if(!value) return;
 
-const filtered=companies.filter(c=>
-c.toLowerCase().includes(value)
+const filtered=companies.filter(company =>
+company.toLowerCase().includes(value)
 );
 
 filtered.forEach(company=>{
@@ -221,7 +236,6 @@ div.textContent=company;
 div.onclick=function(){
 
 input.value=company;
-
 suggestionBox.innerHTML="";
 
 };
@@ -232,7 +246,7 @@ suggestionBox.appendChild(div);
 
 });
 
-/* redirect */
+/* REDIRECT KE DASHBOARD */
 function checkCompany(){
 
 const company=input.value.trim();
@@ -240,7 +254,6 @@ const company=input.value.trim();
 if(!company){
 
 alert("Masukkan nama perusahaan");
-
 return;
 
 }
@@ -250,7 +263,7 @@ window.location.href=
 
 }
 
-/* klik luar */
+/* TUTUP SUGGESTION */
 document.addEventListener("click",function(e){
 
 if(!e.target.closest(".search-box")){
