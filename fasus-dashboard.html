@@ -461,7 +461,13 @@ const pjb=cols[5];
 const serial=cols[6];
 const used=parseNumber(cols[7]);
 const remain=parseNumber(cols[8]);
-const statusWaktu=cols[9];
+const statusWaktu=(cols[9] || "").trim();
+
+const cleanStatus=statusWaktu.toUpperCase();
+
+if(cleanStatus==="ACTIVE") activeCount++;
+else if(cleanStatus==="NEAR EXPIRED") nearCount++;
+else if(cleanStatus==="EXPIRED") expiredCount++;
 
 totalPJB+=amountPJB;
 totalUsed+=used;
