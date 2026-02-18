@@ -163,15 +163,16 @@ let companies=[];
 const input=document.getElementById("searchInput");
 const suggestionBox=document.getElementById("suggestions");
 
-/* parser CSV stabil sesuai DATA WEBSITE */
+/* parser CSV sesuai struktur DATA WEBSITE */
 function parseCSV(text){
 
 const lines=text.split("\n");
 
 const result=[];
 
-/* skip header */
-for(let i=1;i<lines.length;i++){
+/* HEADER ADA DI ROW 5 */
+/* DATA MULAI ROW 6 */
+for(let i=5;i<lines.length;i++){
 
 const line=lines[i];
 
