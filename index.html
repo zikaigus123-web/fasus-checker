@@ -252,7 +252,7 @@ fetch(CSV_URL)
 
 const parsed=parseCSV(text);
 
-const unique=new Set(parsed.slice(1));
+const unique=new Set(parsed.slice(5));
 
 companies=Array.from(unique).sort();
 
