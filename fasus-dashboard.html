@@ -147,14 +147,9 @@ border-radius:6px;
 background-color:#fff3cd;
 }
 
-/* card total search */
 #searchTotalCard{
 border-left:5px solid #007bff;
 }
-
-/* ======================================
-   MOBILE RESPONSIVE FIX
-====================================== */
 
 @media (max-width:768px){
 
@@ -176,7 +171,6 @@ padding:15px;
 .company{
 font-size:22px;
 text-align:center;
-word-break:break-word;
 }
 
 .updated{
@@ -186,34 +180,10 @@ text-align:center;
 
 .cards{
 flex-direction:column;
-gap:12px;
-}
-
-.card{
-padding:15px;
-}
-
-.card-value{
-font-size:22px;
-}
-
-.charts{
-flex-direction:column;
-gap:15px;
 }
 
 .chart-box{
 height:280px;
-padding:15px;
-}
-
-.search-box{
-padding:12px;
-}
-
-.search-input{
-font-size:16px;
-padding:12px;
 }
 
 table{
@@ -221,10 +191,6 @@ font-size:13px;
 display:block;
 overflow-x:auto;
 white-space:nowrap;
-}
-
-th, td{
-padding:8px;
 }
 
 }
@@ -263,14 +229,12 @@ padding:8px;
 
 </div>
 
-<!-- CARD TOTAL BERDASARKAN SEARCH -->
 <div class="cards">
 <div class="card" id="searchTotalCard" style="display:none;">
-<div class="card-title" id="searchTotalTitle">Total nomor PJB</div>
-<div class="card-value" id="searchTotalValue">Rp 0</div>
+<div class="card-title" id="searchTotalTitle"></div>
+<div class="card-value" id="searchTotalValue"></div>
 </div>
 </div>
-
 
 <div class="charts">
 
@@ -323,17 +287,11 @@ onkeyup="searchTable()"
 
 <script>
 
-const BASE_CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vTbJYRkPPTPDYHrDTy-eA_e5rUZ_VowdvBDjHU0BD7rKTvHIZfZAQf_ctl8qDkpiGYVnr9qARdX4fZ6/pub?gid=1924167205&single=true&output=csv";
+const BASE_CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vQUKPRwONIwVc0snCr28PWvOKCyRJUf_J4mMEP2qGXFzrhFW_u9NbjlnHnWLXQdnNmZbtkVfAxOQnw9/pub?gid=1748464450&single=true&output=csv";
 
 let pieChartInstance=null;
 let barChartInstance=null;
 let timeChartInstance=null;
-
-let isLoading=false;
-
-function getCSVUrl(){
-return BASE_CSV_URL+"&t="+Date.now();
-}
 
 function formatRupiah(num){
 return "Rp "+num.toLocaleString("id-ID");
@@ -349,55 +307,79 @@ if(!str) return 0;
 return parseFloat(str.replace(/Rp/g,"").replace(/\./g,"").replace(/,/g,"").trim())||0;
 }
 
+function parseDate(dateStr){
+
+if(!dateStr) return null;
+
+const parts=dateStr.split("/");
+
+if(parts.length!==3) return new Date(dateStr);
+
+return new Date(parts[2],parts[1]-1,parts[0]);
+
+}
+
+function getStatusWaktu(expiredDate){
+
+const expired=parseDate(expiredDate);
+
+if(!expired) return "";
+
+const today=new Date();
+
+expired.setHours(0,0,0,0);
+today.setHours(0,0,0,0);
+
+const diffDays=(expired-today)/(1000*60*60*24);
+
+if(diffDays<0) return "EXPIRED";
+if(diffDays<=30) return "NEAR EXPIRED";
+return "ACTIVE";
+
+}
+
 function getTimeClass(status){
+
 if(status==="ACTIVE") return "time-active";
 if(status==="NEAR EXPIRED") return "time-near";
 if(status==="EXPIRED") return "time-expired";
+
 return "";
+
 }
 
-/* UPDATE TOTAL BERDASARKAN SEARCH */
 function updateSearchTotal(){
 
 const input=document.getElementById("searchInput").value.toLowerCase();
 const rows=document.querySelectorAll("#tableBody tr");
 
 let total=0;
-let foundPJB="";
+let pjb="";
 
 rows.forEach(row=>{
 
 if(row.style.display==="none") return;
 
-const pjb=row.getAttribute("data-pjb");
+pjb=row.getAttribute("data-pjb");
 
-if(!foundPJB) foundPJB=pjb;
-
-const remainText=row.children[3].innerText;
-const remain=parseNumber(remainText);
-
-total+=remain;
+total+=parseNumber(row.children[3].innerText);
 
 });
 
 const card=document.getElementById("searchTotalCard");
 
-if(input===""){
+if(!input){
 card.style.display="none";
 return;
 }
 
-document.getElementById("searchTotalTitle").innerText=
-"Total nomor PJB "+foundPJB;
-
-document.getElementById("searchTotalValue").innerText=
-formatRupiah(total);
+document.getElementById("searchTotalTitle").innerText="Total nomor PJB "+pjb;
+document.getElementById("searchTotalValue").innerText=formatRupiah(total);
 
 card.style.display="block";
 
 }
 
-/* SEARCH */
 function searchTable(){
 
 const input=document.getElementById("searchInput").value.toLowerCase();
@@ -408,11 +390,8 @@ rows.forEach(row=>{
 const pjb=row.getAttribute("data-pjb");
 const serial=row.getAttribute("data-serial");
 
-row.classList.remove("highlight");
-
 if(pjb.includes(input)||serial.includes(input)){
 row.style.display="";
-if(input!=="") row.classList.add("highlight");
 }else{
 row.style.display="none";
 }
@@ -425,21 +404,15 @@ updateSearchTotal();
 
 async function loadDashboard(){
 
-if(isLoading) return;
-isLoading=true;
-
-try{
-
-const response=await fetch(getCSVUrl(),{cache:"no-store"});
-const text=await response.text();
+const res=await fetch(BASE_CSV_URL+"&t="+Date.now());
+const text=await res.text();
 
 const company=getCompany();
 
 document.getElementById("companyName").innerText=company;
-document.getElementById("updated").innerText=
-"Last updated: "+new Date().toLocaleString("id-ID");
+document.getElementById("updated").innerText="Last updated: "+new Date().toLocaleString("id-ID");
 
-const rows=text.split("\n").slice(1);
+const rows=text.split("\n").slice(6);
 
 let totalPJB=0,totalUsed=0,totalRemain=0;
 let doneCount=0,notyetCount=0;
@@ -454,14 +427,14 @@ const cols=row.split(",");
 
 if(cols[0]?.trim()!==company) return;
 
-const expired=cols[2];
-const amountPJB=parseNumber(cols[3]);
-const status=cols[4];
-const pjb=cols[5];
-const serial=cols[6];
-const used=parseNumber(cols[7]);
-const remain=parseNumber(cols[8]);
-const statusWaktu=cols[9];
+const expired=cols[6];
+const amountPJB=parseNumber(cols[7]);
+const status=cols[8];
+const pjb=cols[9];
+const serial=cols[10];
+const used=parseNumber(cols[13]);
+const remain=parseNumber(cols[14]);
+const statusWaktu=getStatusWaktu(expired);
 
 totalPJB+=amountPJB;
 totalUsed+=used;
@@ -472,7 +445,7 @@ else notyetCount++;
 
 if(statusWaktu==="ACTIVE") activeCount++;
 else if(statusWaktu==="NEAR EXPIRED") nearCount++;
-else if(statusWaktu==="EXPIRED") expiredCount++;
+else expiredCount++;
 
 const tr=document.createElement("tr");
 
@@ -496,31 +469,15 @@ document.getElementById("totalPJB").innerText=formatRupiah(totalPJB);
 document.getElementById("totalUsed").innerText=formatRupiah(totalUsed);
 document.getElementById("totalRemain").innerText=formatRupiah(totalRemain);
 
-if(pieChartInstance) pieChartInstance.destroy();
 pieChartInstance=new Chart(pieChart,{type:"pie",data:{labels:["Terpakai","Tersisa"],datasets:[{data:[totalUsed,totalRemain]}]},options:{responsive:true,maintainAspectRatio:false}});
 
-if(barChartInstance) barChartInstance.destroy();
 barChartInstance=new Chart(barChart,{type:"bar",data:{labels:["DONE","NOT YET"],datasets:[{data:[doneCount,notyetCount],backgroundColor:["green","red"]}]},options:{responsive:true,maintainAspectRatio:false}});
 
-if(timeChartInstance) timeChartInstance.destroy();
 timeChartInstance=new Chart(timeChart,{type:"pie",data:{labels:["ACTIVE","NEAR EXPIRED","EXPIRED"],datasets:[{data:[activeCount,nearCount,expiredCount],backgroundColor:["green","#e6a700","red"]}]},options:{responsive:true,maintainAspectRatio:false}});
 
-}catch(e){
-console.error(e);
-}
-
-isLoading=false;
 }
 
 loadDashboard();
-setInterval(loadDashboard,60000);
-
-document.addEventListener("visibilitychange",function(){
-if(!document.hidden) loadDashboard();
-});
-
-window.addEventListener("focus",loadDashboard);
-window.addEventListener("pageshow",loadDashboard);
 
 </script>
 
