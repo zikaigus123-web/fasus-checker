@@ -147,6 +147,85 @@ border-radius:6px;
 background-color:#fff3cd;
 }
 
+
+/* ======================================
+   MOBILE RESPONSIVE FIX
+   TIDAK MENGUBAH CODE ASLI
+====================================== */
+
+@media (max-width:768px){
+
+.header{
+flex-direction:column;
+gap:10px;
+text-align:center;
+padding:15px;
+}
+
+.logo{
+height:32px;
+}
+
+.container{
+padding:15px;
+}
+
+.company{
+font-size:22px;
+text-align:center;
+word-break:break-word;
+}
+
+.updated{
+font-size:13px;
+text-align:center;
+}
+
+.cards{
+flex-direction:column;
+gap:12px;
+}
+
+.card{
+padding:15px;
+}
+
+.card-value{
+font-size:22px;
+}
+
+.charts{
+flex-direction:column;
+gap:15px;
+}
+
+.chart-box{
+height:280px;
+padding:15px;
+}
+
+.search-box{
+padding:12px;
+}
+
+.search-input{
+font-size:16px;
+padding:12px;
+}
+
+table{
+font-size:13px;
+display:block;
+overflow-x:auto;
+white-space:nowrap;
+}
+
+th, td{
+padding:8px;
+}
+
+}
+
 </style>
 </head>
 
@@ -376,21 +455,14 @@ console.error(e);
 isLoading=false;
 }
 
-/* LOAD PERTAMA */
 loadDashboard();
-
-/* REFRESH SETIAP 60 DETIK */
 setInterval(loadDashboard,60000);
 
-/* REFRESH SAAT TAB AKTIF */
 document.addEventListener("visibilitychange",function(){
 if(!document.hidden) loadDashboard();
 });
 
-/* REFRESH SAAT WINDOW FOCUS */
 window.addEventListener("focus",loadDashboard);
-
-/* REFRESH SAAT PAGE SHOW */
 window.addEventListener("pageshow",loadDashboard);
 
 </script>
