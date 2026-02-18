@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -49,6 +50,7 @@ margin-bottom:20px;
 display:flex;
 gap:20px;
 margin-bottom:25px;
+flex-wrap:wrap;
 }
 
 .card{
@@ -57,6 +59,7 @@ padding:20px;
 border-radius:8px;
 flex:1;
 box-shadow:0 2px 6px rgba(0,0,0,0.1);
+min-width:250px;
 }
 
 .card-title{
@@ -81,6 +84,7 @@ padding:20px;
 border-radius:8px;
 flex:1;
 height:350px;
+min-width:300px;
 }
 
 .search-box{
@@ -94,6 +98,8 @@ margin-bottom:15px;
 width:100%;
 padding:12px;
 font-size:16px;
+border:1px solid #ccc;
+border-radius:6px;
 }
 
 table{
@@ -105,6 +111,7 @@ border-collapse:collapse;
 th{
 background:#eee;
 padding:12px;
+text-align:left;
 }
 
 td{
@@ -138,8 +145,8 @@ font-weight:bold;
 }
 
 </style>
-</head>
 
+</head>
 <body>
 
 <div class="header">
@@ -150,6 +157,7 @@ font-weight:bold;
 <div class="container">
 
 <div id="companyName" class="company"></div>
+
 <div id="updated" class="updated"></div>
 
 <div class="cards">
@@ -165,7 +173,7 @@ font-weight:bold;
 </div>
 
 <div class="card">
-<div class="card-title">Total Amount Sisa Budget PJB</div>
+<div class="card-title">Total Amount Sisa Budget</div>
 <div class="card-value" id="totalRemain">Rp 0</div>
 </div>
 
@@ -214,7 +222,9 @@ font-weight:bold;
 
 const CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vQUKPRwONIwVc0snCr28PWvOKCyRJUf_J4mMEP2qGXFzrhFW_u9NbjlnHnWLXQdnNmZbtkVfAxOQnw9/pub?gid=1324873592&single=true&output=csv";
 
-let pieChart,barChart,timeChart;
+let pieChart=null;
+let barChart=null;
+let timeChart=null;
 
 function format(num){
 return "Rp "+num.toLocaleString("id-ID");
@@ -222,7 +232,7 @@ return "Rp "+num.toLocaleString("id-ID");
 
 function parse(num){
 if(!num)return 0;
-return Number(num.replace(/[^\d]/g,""));
+return Number(num.toString().replace(/[^\d]/g,"")) || 0;
 }
 
 function getCompany(){
@@ -231,8 +241,13 @@ return new URLSearchParams(location.search).get("company");
 
 function getStatusWaktu(dateStr){
 
+if(!dateStr)return "";
+
 const today=new Date();
-const expired=new Date(dateStr.split("/").reverse().join("-"));
+
+const parts=dateStr.split("/");
+
+const expired=new Date(parts[2],parts[1]-1,parts[0]);
 
 const diff=(expired-today)/(1000*60*60*24);
 
@@ -248,31 +263,24 @@ if(status==="ACTIVE")return "time-active";
 if(status==="NEAR EXPIRED")return "time-near";
 if(status==="EXPIRED")return "time-expired";
 
+return "";
+
 }
 
 async function load(){
 
 const res=await fetch(CSV_URL+"&t="+Date.now());
+
 const text=await res.text();
 
 const lines=text.split("\n");
 
-/* HEADER ADA DI ROW 5 */
-const header=lines[4].split(",");
-
-/* DATA MULAI ROW 6 */
-const rows=lines.slice(5);
-
-const col={};
-
-header.forEach((name,index)=>{
-col[name.trim()]=index;
-});
-
 const company=getCompany();
 
 document.getElementById("companyName").innerText=company;
-document.getElementById("updated").innerText="Last updated: "+new Date().toLocaleString("id-ID");
+
+document.getElementById("updated").innerText=
+"Last updated: "+new Date().toLocaleString("id-ID");
 
 let totalPJB=0;
 let totalUsed=0;
@@ -286,26 +294,45 @@ let near=0;
 let expired=0;
 
 const tbody=document.getElementById("tableBody");
+
 tbody.innerHTML="";
 
-rows.forEach(row=>{
+/* MULAI DARI BARIS 7 */
+
+for(let i=6;i<lines.length;i++){
+
+const row=lines[i];
+
+if(!row || row.trim()==="")continue;
 
 const c=row.split(",");
 
-if(c[col["Pemilik Fasus"]]!==company)return;
+/* mapping sesuai sheet */
 
-const expiredDate=c[col["Expired Date"]];
-const amountPJB=parse(c[col["Amount PJB"]]);
-const status=c[col["Status Utilisasi Fasus"]];
-const pjb=c[col["PJB"]];
-const serial=c[col["Serial Number"]];
-const used=parse(c[col["Amount Terpakai"]]);
-const remain=parse(c[col["Sisa Budget PJB"]]);
+const pemilik=c[1];
+
+if(pemilik!==company)continue;
+
+const expiredDate=c[5];
+
+const amountPJB=parse(c[6]);
+
+const status=c[7];
+
+const pjb=c[8];
+
+const serial=c[9];
+
+const used=parse(c[12]);
+
+const remain=parse(c[13]);
 
 const statusWaktu=getStatusWaktu(expiredDate);
 
 totalPJB+=amountPJB;
+
 totalUsed+=used;
+
 totalRemain+=remain;
 
 if(status==="DONE")done++;
@@ -328,29 +355,68 @@ tr.innerHTML=`
 
 tbody.appendChild(tr);
 
-});
+}
+
+/* update cards */
 
 document.getElementById("totalPJB").innerText=format(totalPJB);
+
 document.getElementById("totalUsed").innerText=format(totalUsed);
+
 document.getElementById("totalRemain").innerText=format(totalRemain);
 
+/* pie */
+
 if(pieChart)pieChart.destroy();
-pieChart=new Chart(document.getElementById("pieChart"),{
+
+pieChart=new Chart(
+document.getElementById("pieChart"),
+{
 type:"pie",
-data:{labels:["Terpakai","Sisa"],datasets:[{data:[totalUsed,totalRemain]}]}
-});
+data:{
+labels:["Terpakai","Sisa"],
+datasets:[{
+data:[totalUsed,totalRemain]
+}]
+}
+}
+);
+
+/* bar */
 
 if(barChart)barChart.destroy();
-barChart=new Chart(document.getElementById("barChart"),{
+
+barChart=new Chart(
+document.getElementById("barChart"),
+{
 type:"bar",
-data:{labels:["DONE","NOT YET"],datasets:[{data:[done,notyet],backgroundColor:["green","red"]}]}
-});
+data:{
+labels:["DONE","NOT YET"],
+datasets:[{
+data:[done,notyet],
+backgroundColor:["green","red"]
+}]
+}
+}
+);
+
+/* time */
 
 if(timeChart)timeChart.destroy();
-timeChart=new Chart(document.getElementById("timeChart"),{
+
+timeChart=new Chart(
+document.getElementById("timeChart"),
+{
 type:"pie",
-data:{labels:["ACTIVE","NEAR EXPIRED","EXPIRED"],datasets:[{data:[active,near,expired],backgroundColor:["green","orange","red"]}]}
-});
+data:{
+labels:["ACTIVE","NEAR EXPIRED","EXPIRED"],
+datasets:[{
+data:[active,near,expired],
+backgroundColor:["green","orange","red"]
+}]
+}
+}
+);
 
 }
 
