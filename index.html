@@ -1,5 +1,161 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Fasus Budget Checker</title>
+
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="shortcut icon" href="favicon.ico">
+<link rel="apple-touch-icon" href="favicon.ico">
+
+<style>
+
+body{
+margin:0;
+font-family:Arial,sans-serif;
+background:url("background.jpg") no-repeat center center fixed;
+background-size:cover;
+}
+
+.overlay{
+position:relative;
+width:100%;
+height:100vh;
+background:rgba(0,0,0,0.55);
+}
+
+.logo-ut{
+position:absolute;
+top:20px;
+right:80px;
+height:40px;
+z-index:10;
+}
+
+.logo-insani{
+position:absolute;
+bottom:20px;
+left:50%;
+transform:translateX(-50%);
+height:45px;
+z-index:10;
+}
+
+.center-container{
+position:absolute;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+text-align:center;
+color:white;
+}
+
+.title{
+font-size:48px;
+font-weight:bold;
+margin-bottom:25px;
+}
+
+.search-wrapper{
+display:flex;
+justify-content:center;
+gap:10px;
+}
+
+.search-box{
+position:relative;
+}
+
+#searchInput{
+width:320px;
+padding:12px;
+font-size:16px;
+border-radius:4px;
+border:none;
+outline:none;
+}
+
+button{
+padding:12px 22px;
+font-size:16px;
+font-weight:bold;
+background:#ffc107;
+border:none;
+border-radius:4px;
+cursor:pointer;
+}
+
+button:hover{
+background:#e0a800;
+}
+
+.suggestions{
+position:absolute;
+top:46px;
+left:0;
+width:100%;
+background:white;
+color:black;
+border-radius:4px;
+max-height:200px;
+overflow-y:auto;
+z-index:9999;
+box-shadow:0 4px 10px rgba(0,0,0,0.3);
+}
+
+.suggestion-item{
+padding:10px;
+cursor:pointer;
+}
+
+.suggestion-item:hover{
+background:#eee;
+}
+
+</style>
+
+</head>
+<body>
+
+<div class="overlay">
+
+<img src="logo-ut.png" class="logo-ut">
+
+<div class="center-container">
+
+<div class="title">CEK BUDGET FASUS</div>
+
+<div class="search-wrapper">
+
+<div class="search-box">
+
+<input
+type="text"
+id="searchInput"
+placeholder="Masukkan nama perusahaan"
+autocomplete="off"
+>
+
+<div id="suggestions" class="suggestions"></div>
+
+</div>
+
+<button onclick="checkCompany()">Check</button>
+
+</div>
+
+</div>
+
+<img src="logo-insan.png" class="logo-insani">
+
+</div>
+
 <script>
 
+/* CSV DATA WEBSITE FINAL */
 const CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vQUKPRwONIwVc0snCr28PWvOKCyRJUf_J4mMEP2qGXFzrhFW_u9NbjlnHnWLXQdnNmZbtkVfAxOQnw9/pub?gid=1324873592&single=true&output=csv";
 
 let companies=[];
@@ -7,13 +163,14 @@ let companies=[];
 const input=document.getElementById("searchInput");
 const suggestionBox=document.getElementById("suggestions");
 
-/* parser CSV aman dan stabil */
+/* parser CSV stabil sesuai DATA WEBSITE */
 function parseCSV(text){
 
 const lines=text.split("\n");
 
 const result=[];
 
+/* skip header */
 for(let i=1;i<lines.length;i++){
 
 const line=lines[i];
@@ -22,6 +179,7 @@ if(!line || line.trim()==="") continue;
 
 const cols=line.split(",");
 
+/* kolom A = Pemilik Fasus */
 const company=cols[0];
 
 if(company && company.trim()!==""){
@@ -41,13 +199,14 @@ fetch(CSV_URL)
 
 const parsed=parseCSV(text);
 
+/* hapus duplikat */
 const unique=[...new Set(parsed)];
 
 companies=unique.sort();
 
 });
 
-/* suggestion */
+/* suggestion realtime */
 input.addEventListener("input",function(){
 
 const value=this.value.toLowerCase();
@@ -80,14 +239,16 @@ suggestionBox.appendChild(div);
 
 });
 
-/* redirect */
+/* redirect ke dashboard */
 function checkCompany(){
 
 const company=input.value.trim();
 
 if(!company){
+
 alert("Masukkan nama perusahaan");
 return;
+
 }
 
 window.location.href=
@@ -95,7 +256,7 @@ window.location.href=
 
 }
 
-/* klik luar */
+/* klik luar tutup suggestion */
 document.addEventListener("click",function(e){
 
 if(!e.target.closest(".search-box")){
@@ -105,3 +266,6 @@ suggestionBox.innerHTML="";
 });
 
 </script>
+
+</body>
+</html>
