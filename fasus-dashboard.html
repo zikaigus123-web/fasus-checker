@@ -50,6 +50,7 @@ margin-bottom:20px;
 display:flex;
 gap:20px;
 margin-bottom:25px;
+flex-wrap:wrap;
 }
 
 .card{
@@ -57,6 +58,7 @@ background:white;
 padding:20px;
 border-radius:8px;
 flex:1;
+min-width:250px;
 box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
 
@@ -70,18 +72,12 @@ font-weight:bold;
 margin-top:5px;
 }
 
-.charts{
-display:flex;
-gap:20px;
-margin-bottom:30px;
-flex-wrap:wrap;
-}
-
 .chart-box{
 background:white;
 padding:20px;
 border-radius:8px;
 flex:1;
+min-width:300px;
 height:350px;
 }
 
@@ -144,7 +140,7 @@ border-radius:6px;
 }
 
 .highlight{
-background-color:#fff3cd;
+background:#fff3cd;
 }
 
 #searchTotalCard{
@@ -152,31 +148,6 @@ border-left:5px solid #007bff;
 }
 
 @media (max-width:768px){
-
-.header{
-flex-direction:column;
-gap:10px;
-text-align:center;
-padding:15px;
-}
-
-.logo{
-height:32px;
-}
-
-.container{
-padding:15px;
-}
-
-.company{
-font-size:22px;
-text-align:center;
-}
-
-.updated{
-font-size:13px;
-text-align:center;
-}
 
 .cards{
 flex-direction:column;
@@ -231,12 +202,12 @@ white-space:nowrap;
 
 <div class="cards">
 <div class="card" id="searchTotalCard" style="display:none;">
-<div class="card-title" id="searchTotalTitle">Total nomor PJB</div>
-<div class="card-value" id="searchTotalValue">Rp 0</div>
+<div class="card-title" id="searchTotalTitle"></div>
+<div class="card-value" id="searchTotalValue"></div>
 </div>
 </div>
 
-<div class="charts">
+<div class="cards">
 
 <div class="chart-box">
 <canvas id="pieChart"></canvas>
@@ -246,11 +217,7 @@ white-space:nowrap;
 <canvas id="barChart"></canvas>
 </div>
 
-</div>
-
-<div class="charts">
-
-<div class="chart-box" style="height:300px;max-width:400px;margin:auto;">
+<div class="chart-box">
 <canvas id="timeChart"></canvas>
 </div>
 
@@ -293,12 +260,6 @@ let pieChartInstance=null;
 let barChartInstance=null;
 let timeChartInstance=null;
 
-let isLoading=false;
-
-function getCSVUrl(){
-return BASE_CSV_URL+"&t="+Date.now();
-}
-
 function formatRupiah(num){
 return "Rp "+num.toLocaleString("id-ID");
 }
@@ -313,29 +274,19 @@ if(!str) return 0;
 return parseFloat(str.replace(/Rp/g,"").replace(/\./g,"").replace(/,/g,"").trim())||0;
 }
 
-/* PARSE DATE DD/MM/YYYY */
 function parseDate(dateStr){
 
 if(!dateStr) return null;
 
 const parts=dateStr.split("/");
 
-if(parts.length!==3) return new Date(dateStr);
-
-const day=parseInt(parts[0]);
-const month=parseInt(parts[1])-1;
-const year=parseInt(parts[2]);
-
-return new Date(year,month,day);
+return new Date(parts[2],parts[1]-1,parts[0]);
 
 }
 
-/* STATUS WAKTU 3 BULAN */
 function getStatusWaktu(expiredDate){
 
 const expired=parseDate(expiredDate);
-
-if(!expired) return "";
 
 const today=new Date();
 
@@ -345,7 +296,6 @@ today.setHours(0,0,0,0);
 const diffDays=(expired-today)/(1000*60*60*24);
 
 if(diffDays<0) return "EXPIRED";
-
 if(diffDays<=90) return "NEAR EXPIRED";
 
 return "ACTIVE";
@@ -353,10 +303,13 @@ return "ACTIVE";
 }
 
 function getTimeClass(status){
+
 if(status==="ACTIVE") return "time-active";
 if(status==="NEAR EXPIRED") return "time-near";
 if(status==="EXPIRED") return "time-expired";
+
 return "";
+
 }
 
 function updateSearchTotal(){
@@ -365,30 +318,28 @@ const input=document.getElementById("searchInput").value.toLowerCase();
 const rows=document.querySelectorAll("#tableBody tr");
 
 let total=0;
-let foundPJB="";
+let pjb="";
 
 rows.forEach(row=>{
 
 if(row.style.display==="none") return;
 
-const pjb=row.getAttribute("data-pjb");
+pjb=row.getAttribute("data-pjb");
 
-if(!foundPJB) foundPJB=pjb;
-
-const remain=parseNumber(row.children[3].innerText);
-
-total+=remain;
+total+=parseNumber(row.children[3].innerText);
 
 });
 
 const card=document.getElementById("searchTotalCard");
 
-if(input===""){
+if(!input){
+
 card.style.display="none";
 return;
+
 }
 
-document.getElementById("searchTotalTitle").innerText="Total nomor PJB "+foundPJB;
+document.getElementById("searchTotalTitle").innerText="Total nomor PJB "+pjb;
 document.getElementById("searchTotalValue").innerText=formatRupiah(total);
 
 card.style.display="block";
@@ -405,11 +356,8 @@ rows.forEach(row=>{
 const pjb=row.getAttribute("data-pjb");
 const serial=row.getAttribute("data-serial");
 
-row.classList.remove("highlight");
-
 if(pjb.includes(input)||serial.includes(input)){
 row.style.display="";
-if(input!=="") row.classList.add("highlight");
 }else{
 row.style.display="none";
 }
@@ -422,26 +370,22 @@ updateSearchTotal();
 
 async function loadDashboard(){
 
-if(isLoading) return;
-isLoading=true;
-
-try{
-
-const response=await fetch(getCSVUrl());
-const text=await response.text();
+const res=await fetch(BASE_CSV_URL+"&t="+Date.now());
+const text=await res.text();
 
 const company=getCompany();
 
 document.getElementById("companyName").innerText=company;
 document.getElementById("updated").innerText="Last updated: "+new Date().toLocaleString("id-ID");
 
-const rows=text.split("\n").slice(1);
+const rows=text.split("\n").slice(6);
 
 let totalPJB=0,totalUsed=0,totalRemain=0;
 let doneCount=0,notyetCount=0;
 let activeCount=0,nearCount=0,expiredCount=0;
 
 const body=document.getElementById("tableBody");
+
 body.innerHTML="";
 
 rows.forEach(row=>{
@@ -494,24 +438,29 @@ document.getElementById("totalUsed").innerText=formatRupiah(totalUsed);
 document.getElementById("totalRemain").innerText=formatRupiah(totalRemain);
 
 if(pieChartInstance) pieChartInstance.destroy();
-pieChartInstance=new Chart(pieChart,{type:"pie",data:{labels:["Terpakai","Tersisa"],datasets:[{data:[totalUsed,totalRemain]}]}});
+
+pieChartInstance=new Chart(pieChart,{
+type:"pie",
+data:{labels:["Terpakai","Tersisa"],datasets:[{data:[totalUsed,totalRemain]}]}
+});
 
 if(barChartInstance) barChartInstance.destroy();
-barChartInstance=new Chart(barChart,{type:"bar",data:{labels:["DONE","NOT YET"],datasets:[{data:[doneCount,notyetCount],backgroundColor:["green","red"]}]}});
+
+barChartInstance=new Chart(barChart,{
+type:"bar",
+data:{labels:["DONE","NOT YET"],datasets:[{data:[doneCount,notyetCount],backgroundColor:["green","red"]}]}
+});
 
 if(timeChartInstance) timeChartInstance.destroy();
-timeChartInstance=new Chart(timeChart,{type:"pie",data:{labels:["ACTIVE","NEAR EXPIRED","EXPIRED"],datasets:[{data:[activeCount,nearCount,expiredCount],backgroundColor:["green","#e6a700","red"]}]}});
 
-}catch(e){
-console.error(e);
-}
-
-isLoading=false;
+timeChartInstance=new Chart(timeChart,{
+type:"pie",
+data:{labels:["ACTIVE","NEAR EXPIRED","EXPIRED"],datasets:[{data:[activeCount,nearCount,expiredCount],backgroundColor:["green","#e6a700","red"]}]}
+});
 
 }
 
 loadDashboard();
-setInterval(loadDashboard,60000);
 
 </script>
 
