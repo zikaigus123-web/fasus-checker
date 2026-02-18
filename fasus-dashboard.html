@@ -7,7 +7,7 @@
 <title>Fasus Budget Dashboard</title>
 
 <link rel="icon" type="image/x-icon" href="favicon.ico">
-<link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
+<link rel="shortcut icon" href="favicon.ico">
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -147,14 +147,9 @@ border-radius:6px;
 background-color:#fff3cd;
 }
 
-/* card total search */
 #searchTotalCard{
 border-left:5px solid #007bff;
 }
-
-/* ======================================
-   MOBILE RESPONSIVE FIX
-====================================== */
 
 @media (max-width:768px){
 
@@ -176,7 +171,6 @@ padding:15px;
 .company{
 font-size:22px;
 text-align:center;
-word-break:break-word;
 }
 
 .updated{
@@ -186,34 +180,10 @@ text-align:center;
 
 .cards{
 flex-direction:column;
-gap:12px;
-}
-
-.card{
-padding:15px;
-}
-
-.card-value{
-font-size:22px;
-}
-
-.charts{
-flex-direction:column;
-gap:15px;
 }
 
 .chart-box{
 height:280px;
-padding:15px;
-}
-
-.search-box{
-padding:12px;
-}
-
-.search-input{
-font-size:16px;
-padding:12px;
 }
 
 table{
@@ -221,10 +191,6 @@ font-size:13px;
 display:block;
 overflow-x:auto;
 white-space:nowrap;
-}
-
-th, td{
-padding:8px;
 }
 
 }
@@ -263,14 +229,12 @@ padding:8px;
 
 </div>
 
-<!-- CARD TOTAL BERDASARKAN SEARCH -->
 <div class="cards">
 <div class="card" id="searchTotalCard" style="display:none;">
 <div class="card-title" id="searchTotalTitle">Total nomor PJB</div>
 <div class="card-value" id="searchTotalValue">Rp 0</div>
 </div>
 </div>
-
 
 <div class="charts">
 
@@ -349,6 +313,45 @@ if(!str) return 0;
 return parseFloat(str.replace(/Rp/g,"").replace(/\./g,"").replace(/,/g,"").trim())||0;
 }
 
+/* PARSE DATE DD/MM/YYYY */
+function parseDate(dateStr){
+
+if(!dateStr) return null;
+
+const parts=dateStr.split("/");
+
+if(parts.length!==3) return new Date(dateStr);
+
+const day=parseInt(parts[0]);
+const month=parseInt(parts[1])-1;
+const year=parseInt(parts[2]);
+
+return new Date(year,month,day);
+
+}
+
+/* STATUS WAKTU 3 BULAN */
+function getStatusWaktu(expiredDate){
+
+const expired=parseDate(expiredDate);
+
+if(!expired) return "";
+
+const today=new Date();
+
+expired.setHours(0,0,0,0);
+today.setHours(0,0,0,0);
+
+const diffDays=(expired-today)/(1000*60*60*24);
+
+if(diffDays<0) return "EXPIRED";
+
+if(diffDays<=90) return "NEAR EXPIRED";
+
+return "ACTIVE";
+
+}
+
 function getTimeClass(status){
 if(status==="ACTIVE") return "time-active";
 if(status==="NEAR EXPIRED") return "time-near";
@@ -356,7 +359,6 @@ if(status==="EXPIRED") return "time-expired";
 return "";
 }
 
-/* UPDATE TOTAL BERDASARKAN SEARCH */
 function updateSearchTotal(){
 
 const input=document.getElementById("searchInput").value.toLowerCase();
@@ -373,8 +375,7 @@ const pjb=row.getAttribute("data-pjb");
 
 if(!foundPJB) foundPJB=pjb;
 
-const remainText=row.children[3].innerText;
-const remain=parseNumber(remainText);
+const remain=parseNumber(row.children[3].innerText);
 
 total+=remain;
 
@@ -387,17 +388,13 @@ card.style.display="none";
 return;
 }
 
-document.getElementById("searchTotalTitle").innerText=
-"Total nomor PJB "+foundPJB;
-
-document.getElementById("searchTotalValue").innerText=
-formatRupiah(total);
+document.getElementById("searchTotalTitle").innerText="Total nomor PJB "+foundPJB;
+document.getElementById("searchTotalValue").innerText=formatRupiah(total);
 
 card.style.display="block";
 
 }
 
-/* SEARCH */
 function searchTable(){
 
 const input=document.getElementById("searchInput").value.toLowerCase();
@@ -430,14 +427,13 @@ isLoading=true;
 
 try{
 
-const response=await fetch(getCSVUrl(),{cache:"no-store"});
+const response=await fetch(getCSVUrl());
 const text=await response.text();
 
 const company=getCompany();
 
 document.getElementById("companyName").innerText=company;
-document.getElementById("updated").innerText=
-"Last updated: "+new Date().toLocaleString("id-ID");
+document.getElementById("updated").innerText="Last updated: "+new Date().toLocaleString("id-ID");
 
 const rows=text.split("\n").slice(1);
 
@@ -461,7 +457,8 @@ const pjb=cols[5];
 const serial=cols[6];
 const used=parseNumber(cols[7]);
 const remain=parseNumber(cols[8]);
-const statusWaktu=cols[9];
+
+const statusWaktu=getStatusWaktu(expired);
 
 totalPJB+=amountPJB;
 totalUsed+=used;
@@ -472,7 +469,7 @@ else notyetCount++;
 
 if(statusWaktu==="ACTIVE") activeCount++;
 else if(statusWaktu==="NEAR EXPIRED") nearCount++;
-else if(statusWaktu==="EXPIRED") expiredCount++;
+else expiredCount++;
 
 const tr=document.createElement("tr");
 
@@ -497,30 +494,24 @@ document.getElementById("totalUsed").innerText=formatRupiah(totalUsed);
 document.getElementById("totalRemain").innerText=formatRupiah(totalRemain);
 
 if(pieChartInstance) pieChartInstance.destroy();
-pieChartInstance=new Chart(pieChart,{type:"pie",data:{labels:["Terpakai","Tersisa"],datasets:[{data:[totalUsed,totalRemain]}]},options:{responsive:true,maintainAspectRatio:false}});
+pieChartInstance=new Chart(pieChart,{type:"pie",data:{labels:["Terpakai","Tersisa"],datasets:[{data:[totalUsed,totalRemain]}]}});
 
 if(barChartInstance) barChartInstance.destroy();
-barChartInstance=new Chart(barChart,{type:"bar",data:{labels:["DONE","NOT YET"],datasets:[{data:[doneCount,notyetCount],backgroundColor:["green","red"]}]},options:{responsive:true,maintainAspectRatio:false}});
+barChartInstance=new Chart(barChart,{type:"bar",data:{labels:["DONE","NOT YET"],datasets:[{data:[doneCount,notyetCount],backgroundColor:["green","red"]}]}});
 
 if(timeChartInstance) timeChartInstance.destroy();
-timeChartInstance=new Chart(timeChart,{type:"pie",data:{labels:["ACTIVE","NEAR EXPIRED","EXPIRED"],datasets:[{data:[activeCount,nearCount,expiredCount],backgroundColor:["green","#e6a700","red"]}]},options:{responsive:true,maintainAspectRatio:false}});
+timeChartInstance=new Chart(timeChart,{type:"pie",data:{labels:["ACTIVE","NEAR EXPIRED","EXPIRED"],datasets:[{data:[activeCount,nearCount,expiredCount],backgroundColor:["green","#e6a700","red"]}]}});
 
 }catch(e){
 console.error(e);
 }
 
 isLoading=false;
+
 }
 
 loadDashboard();
 setInterval(loadDashboard,60000);
-
-document.addEventListener("visibilitychange",function(){
-if(!document.hidden) loadDashboard();
-});
-
-window.addEventListener("focus",loadDashboard);
-window.addEventListener("pageshow",loadDashboard);
 
 </script>
 
