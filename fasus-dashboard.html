@@ -323,7 +323,7 @@ onkeyup="searchTable()"
 
 <script>
 
-const BASE_CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vQUKPRwONIwVc0snCr28PWvOKCyRJUf_J4mMEP2qGXFzrhFW_u9NbjlnHnWLXQdnNmZbtkVfAxOQnw9/pub?gid=1324873592&single=true&output=csv";
+const BASE_CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vTbJYRkPPTPDYHrDTy-eA_e5rUZ_VowdvBDjHU0BD7rKTvHIZfZAQf_ctl8qDkpiGYVnr9qARdX4fZ6/pub?gid=1924167205&single=true&output=csv";
 
 let pieChartInstance=null;
 let barChartInstance=null;
@@ -439,7 +439,7 @@ document.getElementById("companyName").innerText=company;
 document.getElementById("updated").innerText=
 "Last updated: "+new Date().toLocaleString("id-ID");
 
-const rows=text.split("\n").slice(1).filter(r=>r.trim()!=="");
+const rows=text.split("\n").slice(1);
 
 let totalPJB=0,totalUsed=0,totalRemain=0;
 let doneCount=0,notyetCount=0;
@@ -454,22 +454,14 @@ const cols=row.split(",");
 
 if(cols[0]?.trim()!==company) return;
 
-const expired=cols[3];
-const amountPJB=parseNumber(cols[4]);
-const status=cols[5];
-const pjb=cols[6];
-const serial=cols[7];
-const used=parseNumber(cols[10]);
-const remain=parseNumber(cols[11]);
-
-/* hitung status waktu dari expired date */
-const today=new Date();
-const expDate=new Date(expired.split("/").reverse().join("-"));
-const diff=(expDate-today)/(1000*60*60*24);
-
-let statusWaktu="ACTIVE";
-if(diff<0) statusWaktu="EXPIRED";
-else if(diff<=90) statusWaktu="NEAR EXPIRED";
+const expired=cols[2];
+const amountPJB=parseNumber(cols[3]);
+const status=cols[4];
+const pjb=cols[5];
+const serial=cols[6];
+const used=parseNumber(cols[7]);
+const remain=parseNumber(cols[8]);
+const statusWaktu=cols[9];
 
 totalPJB+=amountPJB;
 totalUsed+=used;
