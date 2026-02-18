@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>Fasus Budget Dashboard</title>
 
-<link rel="icon" href="favicon.ico">
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -24,8 +24,8 @@ background:#111;
 color:white;
 padding:15px 30px;
 display:flex;
+justify-content:space-between;
 align-items:center;
-gap:15px;
 }
 
 .logo{
@@ -50,7 +50,6 @@ margin-bottom:20px;
 display:flex;
 gap:20px;
 margin-bottom:25px;
-flex-wrap:wrap;
 }
 
 .card{
@@ -59,7 +58,6 @@ padding:20px;
 border-radius:8px;
 flex:1;
 box-shadow:0 2px 6px rgba(0,0,0,0.1);
-min-width:250px;
 }
 
 .card-title{
@@ -69,12 +67,13 @@ color:#666;
 .card-value{
 font-size:28px;
 font-weight:bold;
+margin-top:5px;
 }
 
 .charts{
 display:flex;
 gap:20px;
-margin-bottom:25px;
+margin-bottom:30px;
 flex-wrap:wrap;
 }
 
@@ -84,22 +83,6 @@ padding:20px;
 border-radius:8px;
 flex:1;
 height:350px;
-min-width:300px;
-}
-
-.search-box{
-background:white;
-padding:15px;
-border-radius:8px;
-margin-bottom:15px;
-}
-
-.search-input{
-width:100%;
-padding:12px;
-font-size:16px;
-border:1px solid #ccc;
-border-radius:6px;
 }
 
 table{
@@ -144,9 +127,111 @@ color:red;
 font-weight:bold;
 }
 
-</style>
+.search-box{
+background:white;
+padding:15px;
+margin-bottom:15px;
+border-radius:8px;
+box-shadow:0 2px 6px rgba(0,0,0,0.1);
+}
 
+.search-input{
+width:100%;
+padding:12px;
+font-size:16px;
+border:1px solid #ccc;
+border-radius:6px;
+}
+
+.highlight{
+background-color:#fff3cd;
+}
+
+/* card total search */
+#searchTotalCard{
+border-left:5px solid #007bff;
+}
+
+/* ======================================
+   MOBILE RESPONSIVE FIX
+====================================== */
+
+@media (max-width:768px){
+
+.header{
+flex-direction:column;
+gap:10px;
+text-align:center;
+padding:15px;
+}
+
+.logo{
+height:32px;
+}
+
+.container{
+padding:15px;
+}
+
+.company{
+font-size:22px;
+text-align:center;
+word-break:break-word;
+}
+
+.updated{
+font-size:13px;
+text-align:center;
+}
+
+.cards{
+flex-direction:column;
+gap:12px;
+}
+
+.card{
+padding:15px;
+}
+
+.card-value{
+font-size:22px;
+}
+
+.charts{
+flex-direction:column;
+gap:15px;
+}
+
+.chart-box{
+height:280px;
+padding:15px;
+}
+
+.search-box{
+padding:12px;
+}
+
+.search-input{
+font-size:16px;
+padding:12px;
+}
+
+table{
+font-size:13px;
+display:block;
+overflow-x:auto;
+white-space:nowrap;
+}
+
+th, td{
+padding:8px;
+}
+
+}
+
+</style>
 </head>
+
 <body>
 
 <div class="header">
@@ -156,9 +241,8 @@ font-weight:bold;
 
 <div class="container">
 
-<div id="companyName" class="company"></div>
-
-<div id="updated" class="updated"></div>
+<div class="company" id="companyName"></div>
+<div class="updated" id="updated"></div>
 
 <div class="cards">
 
@@ -173,11 +257,20 @@ font-weight:bold;
 </div>
 
 <div class="card">
-<div class="card-title">Total Amount Sisa Budget</div>
+<div class="card-title">Total Amount Sisa Budget PJB</div>
 <div class="card-value" id="totalRemain">Rp 0</div>
 </div>
 
 </div>
+
+<!-- CARD TOTAL BERDASARKAN SEARCH -->
+<div class="cards">
+<div class="card" id="searchTotalCard" style="display:none;">
+<div class="card-title" id="searchTotalTitle">Total nomor PJB</div>
+<div class="card-value" id="searchTotalValue">Rp 0</div>
+</div>
+</div>
+
 
 <div class="charts">
 
@@ -189,14 +282,24 @@ font-weight:bold;
 <canvas id="barChart"></canvas>
 </div>
 
-<div class="chart-box">
+</div>
+
+<div class="charts">
+
+<div class="chart-box" style="height:300px;max-width:400px;margin:auto;">
 <canvas id="timeChart"></canvas>
 </div>
 
 </div>
 
 <div class="search-box">
-<input id="searchInput" class="search-input" placeholder="Cari PJB atau Serial Number">
+<input
+type="text"
+id="searchInput"
+class="search-input"
+placeholder="Cari berdasarkan PJB atau Serial Number..."
+onkeyup="searchTable()"
+>
 </div>
 
 <table>
@@ -220,209 +323,204 @@ font-weight:bold;
 
 <script>
 
-const CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vQUKPRwONIwVc0snCr28PWvOKCyRJUf_J4mMEP2qGXFzrhFW_u9NbjlnHnWLXQdnNmZbtkVfAxOQnw9/pub?gid=1324873592&single=true&output=csv";
+const BASE_CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vTbJYRkPPTPDYHrDTy-eA_e5rUZ_VowdvBDjHU0BD7rKTvHIZfZAQf_ctl8qDkpiGYVnr9qARdX4fZ6/pub?gid=1924167205&single=true&output=csv";
 
-let pieChart=null;
-let barChart=null;
-let timeChart=null;
+let pieChartInstance=null;
+let barChartInstance=null;
+let timeChartInstance=null;
 
-function format(num){
+let isLoading=false;
+
+function getCSVUrl(){
+return BASE_CSV_URL+"&t="+Date.now();
+}
+
+function formatRupiah(num){
 return "Rp "+num.toLocaleString("id-ID");
 }
 
-function parse(num){
-if(!num)return 0;
-return Number(num.toString().replace(/[^\d]/g,"")) || 0;
-}
-
 function getCompany(){
-return new URLSearchParams(location.search).get("company");
+const params=new URLSearchParams(window.location.search);
+return params.get("company");
 }
 
-function getStatusWaktu(dateStr){
-
-if(!dateStr)return "";
-
-const today=new Date();
-
-const parts=dateStr.split("/");
-
-const expired=new Date(parts[2],parts[1]-1,parts[0]);
-
-const diff=(expired-today)/(1000*60*60*24);
-
-if(diff<0)return "EXPIRED";
-if(diff<=90)return "NEAR EXPIRED";
-return "ACTIVE";
-
+function parseNumber(str){
+if(!str) return 0;
+return parseFloat(str.replace(/Rp/g,"").replace(/\./g,"").replace(/,/g,"").trim())||0;
 }
 
 function getTimeClass(status){
-
-if(status==="ACTIVE")return "time-active";
-if(status==="NEAR EXPIRED")return "time-near";
-if(status==="EXPIRED")return "time-expired";
-
+if(status==="ACTIVE") return "time-active";
+if(status==="NEAR EXPIRED") return "time-near";
+if(status==="EXPIRED") return "time-expired";
 return "";
+}
+
+/* UPDATE TOTAL BERDASARKAN SEARCH */
+function updateSearchTotal(){
+
+const input=document.getElementById("searchInput").value.toLowerCase();
+const rows=document.querySelectorAll("#tableBody tr");
+
+let total=0;
+let foundPJB="";
+
+rows.forEach(row=>{
+
+if(row.style.display==="none") return;
+
+const pjb=row.getAttribute("data-pjb");
+
+if(!foundPJB) foundPJB=pjb;
+
+const remainText=row.children[3].innerText;
+const remain=parseNumber(remainText);
+
+total+=remain;
+
+});
+
+const card=document.getElementById("searchTotalCard");
+
+if(input===""){
+card.style.display="none";
+return;
+}
+
+document.getElementById("searchTotalTitle").innerText=
+"Total nomor PJB "+foundPJB;
+
+document.getElementById("searchTotalValue").innerText=
+formatRupiah(total);
+
+card.style.display="block";
 
 }
 
-async function load(){
+/* SEARCH */
+function searchTable(){
 
-const res=await fetch(CSV_URL+"&t="+Date.now());
+const input=document.getElementById("searchInput").value.toLowerCase();
+const rows=document.querySelectorAll("#tableBody tr");
 
-const text=await res.text();
+rows.forEach(row=>{
 
-const lines=text.split("\n");
+const pjb=row.getAttribute("data-pjb");
+const serial=row.getAttribute("data-serial");
+
+row.classList.remove("highlight");
+
+if(pjb.includes(input)||serial.includes(input)){
+row.style.display="";
+if(input!=="") row.classList.add("highlight");
+}else{
+row.style.display="none";
+}
+
+});
+
+updateSearchTotal();
+
+}
+
+async function loadDashboard(){
+
+if(isLoading) return;
+isLoading=true;
+
+try{
+
+const response=await fetch(getCSVUrl(),{cache:"no-store"});
+const text=await response.text();
 
 const company=getCompany();
 
 document.getElementById("companyName").innerText=company;
-
 document.getElementById("updated").innerText=
 "Last updated: "+new Date().toLocaleString("id-ID");
 
-let totalPJB=0;
-let totalUsed=0;
-let totalRemain=0;
+const rows=text.split("\n").slice(1);
 
-let done=0;
-let notyet=0;
+let totalPJB=0,totalUsed=0,totalRemain=0;
+let doneCount=0,notyetCount=0;
+let activeCount=0,nearCount=0,expiredCount=0;
 
-let active=0;
-let near=0;
-let expired=0;
+const body=document.getElementById("tableBody");
+body.innerHTML="";
 
-const tbody=document.getElementById("tableBody");
+rows.forEach(row=>{
 
-tbody.innerHTML="";
+const cols=row.split(",");
 
-/* MULAI DARI BARIS 7 */
+if(cols[0]?.trim()!==company) return;
 
-for(let i=6;i<lines.length;i++){
-
-const row=lines[i];
-
-if(!row || row.trim()==="")continue;
-
-const c=row.split(",");
-
-/* mapping sesuai sheet */
-
-const pemilik=c[1];
-
-if(pemilik!==company)continue;
-
-const expiredDate=c[5];
-
-const amountPJB=parse(c[6]);
-
-const status=c[7];
-
-const pjb=c[8];
-
-const serial=c[9];
-
-const used=parse(c[12]);
-
-const remain=parse(c[13]);
-
-const statusWaktu=getStatusWaktu(expiredDate);
+const expired=cols[2];
+const amountPJB=parseNumber(cols[3]);
+const status=cols[4];
+const pjb=cols[5];
+const serial=cols[6];
+const used=parseNumber(cols[7]);
+const remain=parseNumber(cols[8]);
+const statusWaktu=cols[9];
 
 totalPJB+=amountPJB;
-
 totalUsed+=used;
-
 totalRemain+=remain;
 
-if(status==="DONE")done++;
-else notyet++;
+if(status==="DONE") doneCount++;
+else notyetCount++;
 
-if(statusWaktu==="ACTIVE")active++;
-else if(statusWaktu==="NEAR EXPIRED")near++;
-else expired++;
+if(statusWaktu==="ACTIVE") activeCount++;
+else if(statusWaktu==="NEAR EXPIRED") nearCount++;
+else if(statusWaktu==="EXPIRED") expiredCount++;
 
 const tr=document.createElement("tr");
+
+tr.setAttribute("data-pjb",pjb.toLowerCase());
+tr.setAttribute("data-serial",serial.toLowerCase());
 
 tr.innerHTML=`
 <td>${pjb}</td>
 <td>${serial}</td>
-<td>${expiredDate}</td>
-<td>${format(remain)}</td>
+<td>${expired}</td>
+<td>${formatRupiah(remain)}</td>
 <td class="${status==="DONE"?"status-done":"status-notyet"}">${status}</td>
 <td class="${getTimeClass(statusWaktu)}">${statusWaktu}</td>
 `;
 
-tbody.appendChild(tr);
+body.appendChild(tr);
 
+});
+
+document.getElementById("totalPJB").innerText=formatRupiah(totalPJB);
+document.getElementById("totalUsed").innerText=formatRupiah(totalUsed);
+document.getElementById("totalRemain").innerText=formatRupiah(totalRemain);
+
+if(pieChartInstance) pieChartInstance.destroy();
+pieChartInstance=new Chart(pieChart,{type:"pie",data:{labels:["Terpakai","Tersisa"],datasets:[{data:[totalUsed,totalRemain]}]},options:{responsive:true,maintainAspectRatio:false}});
+
+if(barChartInstance) barChartInstance.destroy();
+barChartInstance=new Chart(barChart,{type:"bar",data:{labels:["DONE","NOT YET"],datasets:[{data:[doneCount,notyetCount],backgroundColor:["green","red"]}]},options:{responsive:true,maintainAspectRatio:false}});
+
+if(timeChartInstance) timeChartInstance.destroy();
+timeChartInstance=new Chart(timeChart,{type:"pie",data:{labels:["ACTIVE","NEAR EXPIRED","EXPIRED"],datasets:[{data:[activeCount,nearCount,expiredCount],backgroundColor:["green","#e6a700","red"]}]},options:{responsive:true,maintainAspectRatio:false}});
+
+}catch(e){
+console.error(e);
 }
 
-/* update cards */
-
-document.getElementById("totalPJB").innerText=format(totalPJB);
-
-document.getElementById("totalUsed").innerText=format(totalUsed);
-
-document.getElementById("totalRemain").innerText=format(totalRemain);
-
-/* pie */
-
-if(pieChart)pieChart.destroy();
-
-pieChart=new Chart(
-document.getElementById("pieChart"),
-{
-type:"pie",
-data:{
-labels:["Terpakai","Sisa"],
-datasets:[{
-data:[totalUsed,totalRemain]
-}]
-}
-}
-);
-
-/* bar */
-
-if(barChart)barChart.destroy();
-
-barChart=new Chart(
-document.getElementById("barChart"),
-{
-type:"bar",
-data:{
-labels:["DONE","NOT YET"],
-datasets:[{
-data:[done,notyet],
-backgroundColor:["green","red"]
-}]
-}
-}
-);
-
-/* time */
-
-if(timeChart)timeChart.destroy();
-
-timeChart=new Chart(
-document.getElementById("timeChart"),
-{
-type:"pie",
-data:{
-labels:["ACTIVE","NEAR EXPIRED","EXPIRED"],
-datasets:[{
-data:[active,near,expired],
-backgroundColor:["green","orange","red"]
-}]
-}
-}
-);
-
+isLoading=false;
 }
 
-load();
+loadDashboard();
+setInterval(loadDashboard,60000);
 
-setInterval(load,60000);
+document.addEventListener("visibilitychange",function(){
+if(!document.hidden) loadDashboard();
+});
+
+window.addEventListener("focus",loadDashboard);
+window.addEventListener("pageshow",loadDashboard);
 
 </script>
 
