@@ -454,14 +454,14 @@ const cols=row.split(",");
 
 if(cols[0]?.trim()!==company) return;
 
-const expired=cols[2];
-const amountPJB=parseNumber(cols[3]);
-const status=cols[4];
-const pjb=cols[5];
-const serial=cols[6];
-const used=parseNumber(cols[7]);
-const remain=parseNumber(cols[8]);
-const statusWaktu=cols[9];
+const expired=cols[6];
+const amountPJB=parseNumber(cols[7]);
+const status=cols[8];
+const pjb=cols[9];
+const serial=cols[10];
+const used=parseNumber(cols[13]);
+const remain=parseNumber(cols[14]);
+const statusWaktu=cols[23];
 
 totalPJB+=amountPJB;
 totalUsed+=used;
