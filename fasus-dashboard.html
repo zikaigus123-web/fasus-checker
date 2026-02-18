@@ -255,7 +255,7 @@ async function load(){
 const res=await fetch(CSV_URL+"&t="+Date.now());
 const text=await res.text();
 
-const rows=text.split("\n").slice(1);
+const rows=text.split("\n").slice(5);
 
 const company=getCompany();
 
