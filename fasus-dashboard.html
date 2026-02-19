@@ -28,7 +28,6 @@ align-items:center;
 }
 
 .logo{height:40px;}
-
 .container{padding:30px;}
 
 .company{
@@ -121,12 +120,7 @@ border-radius:6px;
 .highlight{background-color:#fff3cd;}
 
 @media (max-width:768px){
-.header{
-flex-direction:column;
-gap:10px;
-text-align:center;
-padding:15px;
-}
+.header{flex-direction:column;gap:10px;text-align:center;padding:15px;}
 .logo{height:32px;}
 .container{padding:15px;}
 .company{font-size:22px;text-align:center;}
@@ -171,6 +165,14 @@ th,td{padding:8px;}
 <div class="card">
 <div class="card-title">Total Amount Sisa Budget PJB</div>
 <div class="card-value" id="totalRemain">Rp 0</div>
+</div>
+</div>
+
+<!-- CARD TOTAL SEARCH -->
+<div class="cards">
+<div class="card" id="searchTotalCard" style="display:none;border-left:5px solid #007bff;">
+<div class="card-title" id="searchTotalTitle">Total nomor PJB</div>
+<div class="card-value" id="searchTotalValue">Rp 0</div>
 </div>
 </div>
 
@@ -265,6 +267,38 @@ if(input!=="") row.classList.add("highlight");
 row.style.display="none";
 }
 });
+
+updateSearchTotal();
+}
+
+function updateSearchTotal(){
+const input=document.getElementById("searchInput").value.toLowerCase();
+const rows=document.querySelectorAll("#tableBody tr");
+
+let total=0;
+let foundPJB="";
+
+rows.forEach(row=>{
+if(row.style.display==="none") return;
+
+const pjb=row.getAttribute("data-pjb");
+if(!foundPJB) foundPJB=pjb;
+
+const remainText=row.children[4].innerText;
+const remain=parseNumber(remainText);
+total+=remain;
+});
+
+const card=document.getElementById("searchTotalCard");
+
+if(input===""){
+card.style.display="none";
+return;
+}
+
+document.getElementById("searchTotalTitle").innerText="Total nomor PJB "+foundPJB;
+document.getElementById("searchTotalValue").innerText=formatRupiah(total);
+card.style.display="block";
 }
 
 async function loadDashboard(){
@@ -279,8 +313,7 @@ const text=await response.text();
 const company=getCompany();
 
 document.getElementById("companyName").innerText=company;
-document.getElementById("updated").innerText=
-"Last updated: "+new Date().toLocaleString("id-ID");
+document.getElementById("updated").innerText="Last updated: "+new Date().toLocaleString("id-ID");
 
 const rows=text.split("\n").slice(1);
 
@@ -321,7 +354,6 @@ if(status==="DONE") doneCount++;
 else notyetCount++;
 
 const tr=document.createElement("tr");
-
 tr.setAttribute("data-pjb",pjb.toLowerCase());
 tr.setAttribute("data-serial",serial.toLowerCase());
 
@@ -336,10 +368,9 @@ tr.innerHTML=`
 `;
 
 body.appendChild(tr);
-
 });
 
-document.getElementById("companyBC").innerText =
+document.getElementById("companyBC").innerText=
 bcSet.size>0 ? "BC: "+Array.from(bcSet).join(" || ") : "";
 
 document.getElementById("totalPJB").innerText=formatRupiah(totalPJB);
@@ -347,40 +378,22 @@ document.getElementById("totalUsed").innerText=formatRupiah(totalUsed);
 document.getElementById("totalRemain").innerText=formatRupiah(totalRemain);
 
 if(pieChartInstance) pieChartInstance.destroy();
-pieChartInstance=new Chart(pieChart,{
-type:"pie",
-data:{labels:["Terpakai","Tersisa"],datasets:[{data:[totalUsed,totalRemain]}]},
-options:{responsive:true,maintainAspectRatio:false}
-});
+pieChartInstance=new Chart(pieChart,{type:"pie",data:{labels:["Terpakai","Tersisa"],datasets:[{data:[totalUsed,totalRemain]}]},options:{responsive:true,maintainAspectRatio:false}});
 
 if(barChartInstance) barChartInstance.destroy();
-barChartInstance=new Chart(barChart,{
-type:"bar",
-data:{labels:["DONE","NOT YET"],datasets:[{data:[doneCount,notyetCount],backgroundColor:["green","red"]}]},
-options:{responsive:true,maintainAspectRatio:false}
-});
+barChartInstance=new Chart(barChart,{type:"bar",data:{labels:["DONE","NOT YET"],datasets:[{data:[doneCount,notyetCount],backgroundColor:["green","red"]}]},options:{responsive:true,maintainAspectRatio:false}});
 
 if(timeChartInstance) timeChartInstance.destroy();
-timeChartInstance=new Chart(timeChart,{
-type:"pie",
-data:{labels:["ACTIVE","NEAR EXPIRED","EXPIRED"],datasets:[{data:[activeCount,nearCount,expiredCount],backgroundColor:["green","#e6a700","red"]}]},
-options:{responsive:true,maintainAspectRatio:false}
-});
+timeChartInstance=new Chart(timeChart,{type:"pie",data:{labels:["ACTIVE","NEAR EXPIRED","EXPIRED"],datasets:[{data:[activeCount,nearCount,expiredCount],backgroundColor:["green","#e6a700","red"]}]},options:{responsive:true,maintainAspectRatio:false}});
 
-}catch(e){
-console.error(e);
-}
-
+}catch(e){console.error(e);}
 isLoading=false;
 }
 
 loadDashboard();
 setInterval(loadDashboard,60000);
 
-document.addEventListener("visibilitychange",function(){
-if(!document.hidden) loadDashboard();
-});
-
+document.addEventListener("visibilitychange",function(){if(!document.hidden) loadDashboard();});
 window.addEventListener("focus",loadDashboard);
 window.addEventListener("pageshow",loadDashboard);
 
