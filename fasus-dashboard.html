@@ -211,8 +211,10 @@ onkeyup="searchTable()">
 <th>Status</th>
 <th>Status Waktu</th>
 <th>Business Area</th>
+<th>Model</th>
 </tr>
 </thead>
+
 <tbody id="tableBody"></tbody>
 </table>
 
@@ -335,6 +337,8 @@ if(cols[0]?.trim()!==company) return;
 
 const bc=cols[1]?.trim() || "";
 const plant=cols[11]?.trim() || "";
+const model=cols[12]?.trim() || "";
+
 
 if(bc) bcSet.add(bc);
 if(plant) plantSet.add(plant);
@@ -372,6 +376,7 @@ tr.innerHTML=`
 <td class="${status==="DONE"?"status-done":"status-notyet"}">${status}</td>
 <td class="${getTimeClass(statusWaktu)}">${statusWaktu}</td>
 <td>${plant}</td>
+<td>${model}</td>
 `;
 
 body.appendChild(tr);
