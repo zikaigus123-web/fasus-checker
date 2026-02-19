@@ -210,7 +210,7 @@ onkeyup="searchTable()">
 <th>Sisa Budget</th>
 <th>Status</th>
 <th>Status Waktu</th>
-<th>Receiving Plant</th>
+<th>Business Area</th>
 </tr>
 </thead>
 <tbody id="tableBody"></tbody>
@@ -381,7 +381,7 @@ document.getElementById("companyBC").innerText=
 bcSet.size>0 ? "BC: "+Array.from(bcSet).join(" || ") : "";
 
 document.getElementById("companyPlant").innerText=
-plantSet.size>0 ? "RECEIVING PLANT: "+Array.from(plantSet).join(" || ") : "";
+plantSet.size>0 ? "BUSINESS AREA: "+Array.from(plantSet).join(" || ") : "";
 
 document.getElementById("totalPJB").innerText=formatRupiah(totalPJB);
 document.getElementById("totalUsed").innerText=formatRupiah(totalUsed);
