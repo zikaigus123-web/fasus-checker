@@ -12,7 +12,6 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-
 body{
 font-family:Arial;
 margin:0;
@@ -28,13 +27,9 @@ justify-content:space-between;
 align-items:center;
 }
 
-.logo{
-height:40px;
-}
+.logo{height:40px;}
 
-.container{
-padding:30px;
-}
+.container{padding:30px;}
 
 .company{
 font-size:32px;
@@ -60,9 +55,7 @@ flex:1;
 box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
 
-.card-title{
-color:#666;
-}
+.card-title{color:#666;}
 
 .card-value{
 font-size:28px;
@@ -102,30 +95,12 @@ padding:10px;
 border-top:1px solid #ddd;
 }
 
-.status-done{
-color:green;
-font-weight:bold;
-}
+.status-done{color:green;font-weight:bold;}
+.status-notyet{color:red;font-weight:bold;}
 
-.status-notyet{
-color:red;
-font-weight:bold;
-}
-
-.time-active{
-color:green;
-font-weight:bold;
-}
-
-.time-near{
-color:#e6a700;
-font-weight:bold;
-}
-
-.time-expired{
-color:red;
-font-weight:bold;
-}
+.time-active{color:green;font-weight:bold;}
+.time-near{color:#e6a700;font-weight:bold;}
+.time-expired{color:red;font-weight:bold;}
 
 .search-box{
 background:white;
@@ -143,83 +118,29 @@ border:1px solid #ccc;
 border-radius:6px;
 }
 
-.highlight{
-background-color:#fff3cd;
-}
+.highlight{background-color:#fff3cd;}
 
 @media (max-width:768px){
-
 .header{
 flex-direction:column;
 gap:10px;
 text-align:center;
 padding:15px;
 }
-
-.logo{
-height:32px;
+.logo{height:32px;}
+.container{padding:15px;}
+.company{font-size:22px;text-align:center;}
+.updated{font-size:13px;text-align:center;}
+.cards{flex-direction:column;gap:12px;}
+.card{padding:15px;}
+.card-value{font-size:22px;}
+.charts{flex-direction:column;gap:15px;}
+.chart-box{height:280px;padding:15px;}
+.search-box{padding:12px;}
+.search-input{font-size:16px;padding:12px;}
+table{font-size:13px;display:block;overflow-x:auto;white-space:nowrap;}
+th,td{padding:8px;}
 }
-
-.container{
-padding:15px;
-}
-
-.company{
-font-size:22px;
-text-align:center;
-word-break:break-word;
-}
-
-.updated{
-font-size:13px;
-text-align:center;
-}
-
-.cards{
-flex-direction:column;
-gap:12px;
-}
-
-.card{
-padding:15px;
-}
-
-.card-value{
-font-size:22px;
-}
-
-.charts{
-flex-direction:column;
-gap:15px;
-}
-
-.chart-box{
-height:280px;
-padding:15px;
-}
-
-.search-box{
-padding:12px;
-}
-
-.search-input{
-font-size:16px;
-padding:12px;
-}
-
-table{
-font-size:13px;
-display:block;
-overflow-x:auto;
-white-space:nowrap;
-}
-
-th, td{
-padding:8px;
-}
-
-}
-
 </style>
 </head>
 
@@ -237,7 +158,6 @@ padding:8px;
 <div class="updated" id="updated"></div>
 
 <div class="cards">
-
 <div class="card">
 <div class="card-title">Total Amount PJB</div>
 <div class="card-value" id="totalPJB">Rp 0</div>
@@ -252,27 +172,21 @@ padding:8px;
 <div class="card-title">Total Amount Sisa Budget PJB</div>
 <div class="card-value" id="totalRemain">Rp 0</div>
 </div>
-
 </div>
 
 <div class="charts">
-
 <div class="chart-box">
 <canvas id="pieChart"></canvas>
 </div>
-
 <div class="chart-box">
 <canvas id="barChart"></canvas>
 </div>
-
 </div>
 
 <div class="charts">
-
 <div class="chart-box" style="height:300px;max-width:400px;margin:auto;">
 <canvas id="timeChart"></canvas>
 </div>
-
 </div>
 
 <div class="search-box">
@@ -281,25 +195,22 @@ type="text"
 id="searchInput"
 class="search-input"
 placeholder="Cari berdasarkan PJB atau Serial Number..."
-onkeyup="searchTable()"
->
+onkeyup="searchTable()">
 </div>
 
 <table>
-
 <thead>
 <tr>
 <th>PJB</th>
 <th>Serial Number</th>
+<th>BC</th>
 <th>Expired Date</th>
 <th>Sisa Budget</th>
 <th>Status</th>
 <th>Status Waktu</th>
 </tr>
 </thead>
-
 <tbody id="tableBody"></tbody>
-
 </table>
 
 </div>
@@ -365,7 +276,6 @@ try{
 
 const response=await fetch(getCSVUrl(),{cache:"no-store"});
 const text=await response.text();
-
 const company=getCompany();
 
 document.getElementById("companyName").innerText=company;
@@ -377,7 +287,7 @@ const rows=text.split("\n").slice(1);
 let totalPJB=0,totalUsed=0,totalRemain=0;
 let doneCount=0,notyetCount=0;
 let activeCount=0,nearCount=0,expiredCount=0;
-let companyBC="";
+let bcSet=new Set();
 
 const body=document.getElementById("tableBody");
 body.innerHTML="";
@@ -385,22 +295,20 @@ body.innerHTML="";
 rows.forEach(row=>{
 
 const cols=row.split(",");
-
 if(cols[0]?.trim()!==company) return;
 
-if(!companyBC){
-companyBC=cols[1]?.trim() || "";
-}
+const bc=cols[1]?.trim() || "";
+if(bc) bcSet.add(bc);
 
-const expired = cols[2]; // Expired Date
-const amountPJB = parseNumber(cols[4]); // Amount PJB
-const status = cols[5]; // Status Utilisasi
-const pjb = cols[6]; // PJB
-const serial = cols[7]; // Serial Number
-const used = parseNumber(cols[8]); // Amount Terpakai
-const remain = parseNumber(cols[9]); // Sisa Budget
-const statusWaktu = (cols[10] || "").trim().toUpperCase(); // Status Waktu
-  
+const expired=cols[2];
+const amountPJB=parseNumber(cols[4]);
+const status=cols[5];
+const pjb=cols[6];
+const serial=cols[7];
+const used=parseNumber(cols[8]);
+const remain=parseNumber(cols[9]);
+const statusWaktu=(cols[10]||"").trim().toUpperCase();
+
 if(statusWaktu==="ACTIVE") activeCount++;
 else if(statusWaktu==="NEAR EXPIRED") nearCount++;
 else if(statusWaktu==="EXPIRED") expiredCount++;
@@ -420,6 +328,7 @@ tr.setAttribute("data-serial",serial.toLowerCase());
 tr.innerHTML=`
 <td>${pjb}</td>
 <td>${serial}</td>
+<td>${bc}</td>
 <td>${expired}</td>
 <td>${formatRupiah(remain)}</td>
 <td class="${status==="DONE"?"status-done":"status-notyet"}">${status}</td>
@@ -431,7 +340,7 @@ body.appendChild(tr);
 });
 
 document.getElementById("companyBC").innerText =
-companyBC ? "BC: "+companyBC : "";
+bcSet.size>0 ? "BC: "+Array.from(bcSet).join(" || ") : "";
 
 document.getElementById("totalPJB").innerText=formatRupiah(totalPJB);
 document.getElementById("totalUsed").innerText=formatRupiah(totalUsed);
@@ -476,6 +385,5 @@ window.addEventListener("focus",loadDashboard);
 window.addEventListener("pageshow",loadDashboard);
 
 </script>
-
 </body>
 </html>
