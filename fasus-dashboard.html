@@ -147,15 +147,6 @@ border-radius:6px;
 background-color:#fff3cd;
 }
 
-/* card total search */
-#searchTotalCard{
-border-left:5px solid #007bff;
-}
-
-/* ======================================
-   MOBILE RESPONSIVE FIX
-====================================== */
-
 @media (max-width:768px){
 
 .header{
@@ -242,6 +233,7 @@ padding:8px;
 <div class="container">
 
 <div class="company" id="companyName"></div>
+<div id="companyBC" style="font-size:18px;font-weight:bold;margin-top:5px;"></div>
 <div class="updated" id="updated"></div>
 
 <div class="cards">
@@ -262,15 +254,6 @@ padding:8px;
 </div>
 
 </div>
-
-<!-- CARD TOTAL BERDASARKAN SEARCH -->
-<div class="cards">
-<div class="card" id="searchTotalCard" style="display:none;">
-<div class="card-title" id="searchTotalTitle">Total nomor PJB</div>
-<div class="card-value" id="searchTotalValue">Rp 0</div>
-</div>
-</div>
-
 
 <div class="charts">
 
@@ -328,7 +311,6 @@ const BASE_CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vQhL1bg675LE
 let pieChartInstance=null;
 let barChartInstance=null;
 let timeChartInstance=null;
-
 let isLoading=false;
 
 function getCSVUrl(){
@@ -356,58 +338,13 @@ if(status==="EXPIRED") return "time-expired";
 return "";
 }
 
-/* UPDATE TOTAL BERDASARKAN SEARCH */
-function updateSearchTotal(){
-
-const input=document.getElementById("searchInput").value.toLowerCase();
-const rows=document.querySelectorAll("#tableBody tr");
-
-let total=0;
-let foundPJB="";
-
-rows.forEach(row=>{
-
-if(row.style.display==="none") return;
-
-const pjb=row.getAttribute("data-pjb");
-
-if(!foundPJB) foundPJB=pjb;
-
-const remainText=row.children[3].innerText;
-const remain=parseNumber(remainText);
-
-total+=remain;
-
-});
-
-const card=document.getElementById("searchTotalCard");
-
-if(input===""){
-card.style.display="none";
-return;
-}
-
-document.getElementById("searchTotalTitle").innerText=
-"Total nomor PJB "+foundPJB;
-
-document.getElementById("searchTotalValue").innerText=
-formatRupiah(total);
-
-card.style.display="block";
-
-}
-
-/* SEARCH */
 function searchTable(){
-
 const input=document.getElementById("searchInput").value.toLowerCase();
 const rows=document.querySelectorAll("#tableBody tr");
 
 rows.forEach(row=>{
-
 const pjb=row.getAttribute("data-pjb");
 const serial=row.getAttribute("data-serial");
-
 row.classList.remove("highlight");
 
 if(pjb.includes(input)||serial.includes(input)){
@@ -416,11 +353,7 @@ if(input!=="") row.classList.add("highlight");
 }else{
 row.style.display="none";
 }
-
 });
-
-updateSearchTotal();
-
 }
 
 async function loadDashboard(){
@@ -444,6 +377,7 @@ const rows=text.split("\n").slice(1);
 let totalPJB=0,totalUsed=0,totalRemain=0;
 let doneCount=0,notyetCount=0;
 let activeCount=0,nearCount=0,expiredCount=0;
+let companyBC="";
 
 const body=document.getElementById("tableBody");
 body.innerHTML="";
@@ -454,20 +388,22 @@ const cols=row.split(",");
 
 if(cols[0]?.trim()!==company) return;
 
-const expired=cols[1];
+if(!companyBC){
+companyBC=cols[1]?.trim() || "";
+}
+
+const expired=cols[2];
 const amountPJB=parseNumber(cols[3]);
 const status=cols[4];
 const pjb=cols[5];
 const serial=cols[6];
 const used=parseNumber(cols[7]);
 const remain=parseNumber(cols[8]);
-const statusWaktu=(cols[9] || "").trim();
+const statusWaktu=(cols[9] || "").trim().toUpperCase();
 
-const cleanStatus=statusWaktu.toUpperCase();
-
-if(cleanStatus==="ACTIVE") activeCount++;
-else if(cleanStatus==="NEAR EXPIRED") nearCount++;
-else if(cleanStatus==="EXPIRED") expiredCount++;
+if(statusWaktu==="ACTIVE") activeCount++;
+else if(statusWaktu==="NEAR EXPIRED") nearCount++;
+else if(statusWaktu==="EXPIRED") expiredCount++;
 
 totalPJB+=amountPJB;
 totalUsed+=used;
@@ -475,10 +411,6 @@ totalRemain+=remain;
 
 if(status==="DONE") doneCount++;
 else notyetCount++;
-
-if(statusWaktu==="ACTIVE") activeCount++;
-else if(statusWaktu==="NEAR EXPIRED") nearCount++;
-else if(statusWaktu==="EXPIRED") expiredCount++;
 
 const tr=document.createElement("tr");
 
@@ -498,18 +430,33 @@ body.appendChild(tr);
 
 });
 
+document.getElementById("companyBC").innerText =
+companyBC ? "BC: "+companyBC : "";
+
 document.getElementById("totalPJB").innerText=formatRupiah(totalPJB);
 document.getElementById("totalUsed").innerText=formatRupiah(totalUsed);
 document.getElementById("totalRemain").innerText=formatRupiah(totalRemain);
 
 if(pieChartInstance) pieChartInstance.destroy();
-pieChartInstance=new Chart(pieChart,{type:"pie",data:{labels:["Terpakai","Tersisa"],datasets:[{data:[totalUsed,totalRemain]}]},options:{responsive:true,maintainAspectRatio:false}});
+pieChartInstance=new Chart(pieChart,{
+type:"pie",
+data:{labels:["Terpakai","Tersisa"],datasets:[{data:[totalUsed,totalRemain]}]},
+options:{responsive:true,maintainAspectRatio:false}
+});
 
 if(barChartInstance) barChartInstance.destroy();
-barChartInstance=new Chart(barChart,{type:"bar",data:{labels:["DONE","NOT YET"],datasets:[{data:[doneCount,notyetCount],backgroundColor:["green","red"]}]},options:{responsive:true,maintainAspectRatio:false}});
+barChartInstance=new Chart(barChart,{
+type:"bar",
+data:{labels:["DONE","NOT YET"],datasets:[{data:[doneCount,notyetCount],backgroundColor:["green","red"]}]},
+options:{responsive:true,maintainAspectRatio:false}
+});
 
 if(timeChartInstance) timeChartInstance.destroy();
-timeChartInstance=new Chart(timeChart,{type:"pie",data:{labels:["ACTIVE","NEAR EXPIRED","EXPIRED"],datasets:[{data:[activeCount,nearCount,expiredCount],backgroundColor:["green","#e6a700","red"]}]},options:{responsive:true,maintainAspectRatio:false}});
+timeChartInstance=new Chart(timeChart,{
+type:"pie",
+data:{labels:["ACTIVE","NEAR EXPIRED","EXPIRED"],datasets:[{data:[activeCount,nearCount,expiredCount],backgroundColor:["green","#e6a700","red"]}]},
+options:{responsive:true,maintainAspectRatio:false}
+});
 
 }catch(e){
 console.error(e);
