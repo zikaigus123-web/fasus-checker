@@ -149,6 +149,7 @@ th,td{padding:8px;}
 
 <div class="company" id="companyName"></div>
 <div id="companyBC" style="font-size:18px;font-weight:bold;margin-top:5px;"></div>
+<div id="companyPlant" style="font-size:16px;font-weight:bold;margin-top:5px;"></div>
 <div class="updated" id="updated"></div>
 
 <div class="cards">
@@ -168,7 +169,6 @@ th,td{padding:8px;}
 </div>
 </div>
 
-<!-- CARD TOTAL SEARCH -->
 <div class="cards">
 <div class="card" id="searchTotalCard" style="display:none;border-left:5px solid #007bff;">
 <div class="card-title" id="searchTotalTitle">Total nomor PJB</div>
@@ -210,6 +210,7 @@ onkeyup="searchTable()">
 <th>Sisa Budget</th>
 <th>Status</th>
 <th>Status Waktu</th>
+<th>Receiving Plant</th>
 </tr>
 </thead>
 <tbody id="tableBody"></tbody>
@@ -284,7 +285,8 @@ if(row.style.display==="none") return;
 const pjb=row.getAttribute("data-pjb");
 if(!foundPJB) foundPJB=pjb;
 
-const remainText=row.children[4].innerText;
+const cells=row.querySelectorAll("td");
+const remainText=cells[4].innerText;
 const remain=parseNumber(remainText);
 total+=remain;
 });
@@ -321,6 +323,7 @@ let totalPJB=0,totalUsed=0,totalRemain=0;
 let doneCount=0,notyetCount=0;
 let activeCount=0,nearCount=0,expiredCount=0;
 let bcSet=new Set();
+let plantSet=new Set();
 
 const body=document.getElementById("tableBody");
 body.innerHTML="";
@@ -331,7 +334,10 @@ const cols=row.split(",");
 if(cols[0]?.trim()!==company) return;
 
 const bc=cols[1]?.trim() || "";
+const plant=cols[11]?.trim() || "";
+
 if(bc) bcSet.add(bc);
+if(plant) plantSet.add(plant);
 
 const expired=cols[2];
 const amountPJB=parseNumber(cols[4]);
@@ -365,6 +371,7 @@ tr.innerHTML=`
 <td>${formatRupiah(remain)}</td>
 <td class="${status==="DONE"?"status-done":"status-notyet"}">${status}</td>
 <td class="${getTimeClass(statusWaktu)}">${statusWaktu}</td>
+<td>${plant}</td>
 `;
 
 body.appendChild(tr);
@@ -372,6 +379,9 @@ body.appendChild(tr);
 
 document.getElementById("companyBC").innerText=
 bcSet.size>0 ? "BC: "+Array.from(bcSet).join(" || ") : "";
+
+document.getElementById("companyPlant").innerText=
+plantSet.size>0 ? "RECEIVING PLANT: "+Array.from(plantSet).join(" || ") : "";
 
 document.getElementById("totalPJB").innerText=formatRupiah(totalPJB);
 document.getElementById("totalUsed").innerText=formatRupiah(totalUsed);
@@ -392,7 +402,6 @@ isLoading=false;
 
 loadDashboard();
 setInterval(loadDashboard,60000);
-
 document.addEventListener("visibilitychange",function(){if(!document.hidden) loadDashboard();});
 window.addEventListener("focus",loadDashboard);
 window.addEventListener("pageshow",loadDashboard);
