@@ -301,14 +301,15 @@ if(cols[0]?.trim()!==company) return;
 /* BC ada di kolom ke-1 */
 if(!bcName) bcName=cols[1];
 
-const expired=cols[2];
-const amountPJB=parseNumber(cols[3]);
-const status=cols[4];
-const pjb=cols[5];
-const serial=cols[6];
-const used=parseNumber(cols[7]);
-const remain=parseNumber(cols[8]);
-const statusWaktu=(cols[9] || "").trim().toUpperCase();
+const expired=cols[2]?.trim();
+const amountPJB=parseNumber(cols[4]);
+const status=cols[5]?.trim();
+const pjb=cols[6]?.trim();
+const serial=cols[7]?.trim();
+const used=parseNumber(cols[8]);
+const remain=parseNumber(cols[9]);
+const statusWaktu=(cols[10] || "").trim();
+
 
 if(statusWaktu==="ACTIVE") activeCount++;
 else if(statusWaktu==="NEAR EXPIRED") nearCount++;
