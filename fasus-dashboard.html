@@ -392,15 +392,15 @@ if(!companyBC){
 companyBC=cols[1]?.trim() || "";
 }
 
-const expired=cols[2];
-const amountPJB=parseNumber(cols[3]);
-const status=cols[4];
-const pjb=cols[5];
-const serial=cols[6];
-const used=parseNumber(cols[7]);
-const remain=parseNumber(cols[8]);
-const statusWaktu=(cols[9] || "").trim().toUpperCase();
-
+const expired = cols[2]; // Expired Date
+const amountPJB = parseNumber(cols[4]); // Amount PJB
+const status = cols[5]; // Status Utilisasi
+const pjb = cols[6]; // PJB
+const serial = cols[7]; // Serial Number
+const used = parseNumber(cols[8]); // Amount Terpakai
+const remain = parseNumber(cols[9]); // Sisa Budget
+const statusWaktu = (cols[10] || "").trim().toUpperCase(); // Status Waktu
+  
 if(statusWaktu==="ACTIVE") activeCount++;
 else if(statusWaktu==="NEAR EXPIRED") nearCount++;
 else if(statusWaktu==="EXPIRED") expiredCount++;
