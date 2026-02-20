@@ -3,102 +3,34 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Fasus Budget Dashboard</title>
-  
-<link rel="icon" type="image/x-icon" href="favicon.ico">
-<link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
 
+<link rel="icon" type="image/x-icon" href="favicon.ico">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-body{
-font-family:Arial;
-margin:0;
-background:#f4f6f8;
-}
-.header{
-background:#111;
-color:white;
-padding:15px 30px;
-display:flex;
-justify-content:space-between;
-align-items:center;
-}
+body{font-family:Arial;margin:0;background:#f4f6f8;}
+.header{background:#111;color:white;padding:15px 30px;display:flex;justify-content:space-between;align-items:center;}
 .logo{height:40px;}
 .container{padding:30px;}
-.company{
-font-size:32px;
-font-weight:bold;
-}
-.updated{
-color:#666;
-margin-bottom:20px;
-}
-.cards{
-display:flex;
-gap:20px;
-margin-bottom:25px;
-}
-.card{
-background:white;
-padding:20px;
-border-radius:8px;
-flex:1;
-box-shadow:0 2px 6px rgba(0,0,0,0.1);
-}
+.company{font-size:32px;font-weight:bold;}
+.updated{color:#666;margin-bottom:20px;}
+.cards{display:flex;gap:20px;margin-bottom:25px;}
+.card{background:white;padding:20px;border-radius:8px;flex:1;box-shadow:0 2px 6px rgba(0,0,0,0.1);}
 .card-title{color:#666;}
-.card-value{
-font-size:28px;
-font-weight:bold;
-margin-top:5px;
-}
-.charts{
-display:flex;
-gap:20px;
-margin-bottom:30px;
-flex-wrap:wrap;
-}
-.chart-box{
-background:white;
-padding:20px;
-border-radius:8px;
-flex:1;
-height:350px;
-}
-table{
-width:100%;
-background:white;
-border-collapse:collapse;
-}
-th{
-background:#eee;
-padding:12px;
-text-align:left;
-}
-td{
-padding:10px;
-border-top:1px solid #ddd;
-}
+.card-value{font-size:28px;font-weight:bold;margin-top:5px;}
+.charts{display:flex;gap:20px;margin-bottom:30px;flex-wrap:wrap;}
+.chart-box{background:white;padding:20px;border-radius:8px;flex:1;height:350px;}
+table{width:100%;background:white;border-collapse:collapse;}
+th{background:#eee;padding:12px;text-align:left;}
+td{padding:10px;border-top:1px solid #ddd;}
 .status-done{color:green;font-weight:bold;}
 .status-notyet{color:red;font-weight:bold;}
 .time-active{color:green;font-weight:bold;}
 .time-near{color:#e6a700;font-weight:bold;}
 .time-expired{color:red;font-weight:bold;}
-.search-box{
-background:white;
-padding:15px;
-margin-bottom:15px;
-border-radius:8px;
-box-shadow:0 2px 6px rgba(0,0,0,0.1);
-}
-.search-input{
-width:100%;
-padding:12px;
-font-size:16px;
-border:1px solid #ccc;
-border-radius:6px;
-}
+.search-box{background:white;padding:15px;margin-bottom:15px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,0.1);}
+.search-input{width:100%;padding:12px;font-size:16px;border:1px solid #ccc;border-radius:6px;}
 .highlight{background-color:#fff3cd;}
 </style>
 </head>
@@ -140,12 +72,8 @@ border-radius:6px;
 </div>
 
 <div class="charts">
-<div class="chart-box">
-<canvas id="pieChart"></canvas>
-</div>
-<div class="chart-box">
-<canvas id="barChart"></canvas>
-</div>
+<div class="chart-box"><canvas id="pieChart"></canvas></div>
+<div class="chart-box"><canvas id="barChart"></canvas></div>
 </div>
 
 <div class="charts">
@@ -155,10 +83,7 @@ border-radius:6px;
 </div>
 
 <div class="search-box">
-<input
-type="text"
-id="searchInput"
-class="search-input"
+<input type="text" id="searchInput" class="search-input"
 placeholder="Cari berdasarkan PJB atau Serial Number..."
 onkeyup="searchTable()">
 </div>
@@ -184,7 +109,7 @@ onkeyup="searchTable()">
 
 <script>
 
-const BASE_CSV_URL="YOUR_CSV_URL_HERE";
+const BASE_CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vQhL1bg675LEpC5RKt_JXxCuwLfR36OtrtGr5AeaKBYN4_0fTWax_NcYoHAgUTifDNuv96GPmmf9sS8/pub?gid=17086544&single=true&output=csv";
 
 let pieChartInstance=null;
 let barChartInstance=null;
@@ -200,13 +125,13 @@ return "Rp "+num.toLocaleString("id-ID");
 }
 
 function getCompany(){
-const params=new URLSearchParams(window.location.search);
-return params.get("company");
+const p=new URLSearchParams(window.location.search).get("company");
+return p ? p.trim() : null;
 }
 
 function getRegion(){
-const params=new URLSearchParams(window.location.search);
-return params.get("region");
+const p=new URLSearchParams(window.location.search).get("region");
+return p ? p.trim() : null;
 }
 
 function getMode(){
@@ -249,18 +174,17 @@ function updateSearchTotal(){
 const input=document.getElementById("searchInput").value.toLowerCase();
 const rows=document.querySelectorAll("#tableBody tr");
 let total=0;
-let foundPJB="";
+let found="";
 rows.forEach(row=>{
 if(row.style.display==="none") return;
-const pjb=row.getAttribute("data-pjb");
-if(!foundPJB) foundPJB=pjb;
+if(!found) found=row.getAttribute("data-pjb");
 const cells=row.querySelectorAll("td");
 const remainText=cells[getMode()==="region"?5:4].innerText;
 total+=parseNumber(remainText);
 });
 const card=document.getElementById("searchTotalCard");
 if(input===""){card.style.display="none";return;}
-document.getElementById("searchTotalTitle").innerText="Total nomor PJB "+foundPJB;
+document.getElementById("searchTotalTitle").innerText="Total nomor PJB "+found;
 document.getElementById("searchTotalValue").innerText=formatRupiah(total);
 card.style.display="block";
 }
@@ -310,16 +234,16 @@ header.innerHTML=`
 <th>Expired Date</th>
 <th>Sisa Budget</th>
 <th>Status</th>
-<th>Status Waktu</th>
 <th>Business Area</th>
+<th>Status Waktu</th>
 <th>Model</th>
 `;
 }
 
 rows.forEach(row=>{
 const cols=row.split(",");
-const comp=cols[0]?.trim()||"";
-const bc=cols[1]?.trim()||"";
+const comp=(cols[0]||"").trim();
+const bc=(cols[1]||"").trim();
 const expired=cols[2];
 const amountPJB=parseNumber(cols[4]);
 const status=cols[5];
@@ -328,22 +252,20 @@ const serial=cols[7];
 const used=parseNumber(cols[8]);
 const remain=parseNumber(cols[9]);
 const statusWaktu=(cols[10]||"").trim().toUpperCase();
-const plant=cols[11]?.trim()||"";
-const model=cols[12]?.trim()||"";
+const plant=(cols[11]||"").trim();
+const model=(cols[12]||"").trim();
 
 if(mode==="company" && comp!==company) return;
-if(mode==="region" && plant!==region) return;
-
-if(statusWaktu==="ACTIVE") activeCount++;
-else if(statusWaktu==="NEAR EXPIRED") nearCount++;
-else if(statusWaktu==="EXPIRED") expiredCount++;
+if(mode==="region" && plant.toUpperCase()!==region.toUpperCase()) return;
 
 totalPJB+=amountPJB;
 totalUsed+=used;
 totalRemain+=remain;
 
-if(status==="DONE") doneCount++;
-else notyetCount++;
+if(status==="DONE") doneCount++; else notyetCount++;
+if(statusWaktu==="ACTIVE") activeCount++;
+else if(statusWaktu==="NEAR EXPIRED") nearCount++;
+else if(statusWaktu==="EXPIRED") expiredCount++;
 
 const tr=document.createElement("tr");
 tr.setAttribute("data-pjb",pjb.toLowerCase());
