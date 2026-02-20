@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>Fasus Budget Dashboard</title>
-
+  
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
 
@@ -229,19 +229,6 @@ let barChartInstance=null;
 let timeChartInstance=null;
 let isLoading=false;
 
-/* ================= ADD ONLY REGION SUPPORT ================= */
-
-function getRegion(){
-const params=new URLSearchParams(window.location.search);
-return params.get("region");
-}
-
-function isRegionMode(){
-return getRegion()!==null;
-}
-
-/* =========================================================== */
-
 function getCSVUrl(){
 return BASE_CSV_URL+"&t="+Date.now();
 }
@@ -327,10 +314,9 @@ try{
 
 const response=await fetch(getCSVUrl(),{cache:"no-store"});
 const text=await response.text();
-
 const company=getCompany();
-const region=getRegion();
 
+document.getElementById("companyName").innerText=company;
 document.getElementById("updated").innerText="Last updated: "+new Date().toLocaleString("id-ID");
 
 const rows=text.split("\n").slice(1);
@@ -347,23 +333,12 @@ body.innerHTML="";
 rows.forEach(row=>{
 
 const cols=row.split(",");
-
-const rowCompany=cols[0]?.trim();
-const rowBusinessArea=cols[11]?.trim();
-
-/* ADD ONLY FILTER */
-
-if(isRegionMode()){
-if(rowBusinessArea!==region) return;
-}else{
-if(rowCompany!==company) return;
-}
-
-/* ================= */
+if(cols[0]?.trim()!==company) return;
 
 const bc=cols[1]?.trim() || "";
-const plant=rowBusinessArea || "";
+const plant=cols[11]?.trim() || "";
 const model=cols[12]?.trim() || "";
+
 
 if(bc) bcSet.add(bc);
 if(plant) plantSet.add(plant);
@@ -405,26 +380,26 @@ tr.innerHTML=`
 `;
 
 body.appendChild(tr);
-
 });
 
-/* ADD ONLY HEADER SWITCH */
-
-if(isRegionMode()){
-document.getElementById("companyName").innerText=region;
-document.getElementById("companyBC").innerText="Area Code: "+region;
-document.getElementById("companyPlant").innerText="";
-}else{
-document.getElementById("companyName").innerText=company;
 document.getElementById("companyBC").innerText=
 bcSet.size>0 ? "BC: "+Array.from(bcSet).join(" || ") : "";
+
 document.getElementById("companyPlant").innerText=
 plantSet.size>0 ? "BUSINESS AREA: "+Array.from(plantSet).join(" || ") : "";
-}
 
 document.getElementById("totalPJB").innerText=formatRupiah(totalPJB);
 document.getElementById("totalUsed").innerText=formatRupiah(totalUsed);
 document.getElementById("totalRemain").innerText=formatRupiah(totalRemain);
+
+if(pieChartInstance) pieChartInstance.destroy();
+pieChartInstance=new Chart(pieChart,{type:"pie",data:{labels:["Terpakai","Tersisa"],datasets:[{data:[totalUsed,totalRemain]}]},options:{responsive:true,maintainAspectRatio:false}});
+
+if(barChartInstance) barChartInstance.destroy();
+barChartInstance=new Chart(barChart,{type:"bar",data:{labels:["DONE","NOT YET"],datasets:[{data:[doneCount,notyetCount],backgroundColor:["green","red"]}]},options:{responsive:true,maintainAspectRatio:false}});
+
+if(timeChartInstance) timeChartInstance.destroy();
+timeChartInstance=new Chart(timeChart,{type:"pie",data:{labels:["ACTIVE","NEAR EXPIRED","EXPIRED"],datasets:[{data:[activeCount,nearCount,expiredCount],backgroundColor:["green","#e6a700","red"]}]},options:{responsive:true,maintainAspectRatio:false}});
 
 }catch(e){console.error(e);}
 isLoading=false;
@@ -437,6 +412,5 @@ window.addEventListener("focus",loadDashboard);
 window.addEventListener("pageshow",loadDashboard);
 
 </script>
-
 </body>
 </html>
