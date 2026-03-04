@@ -300,22 +300,43 @@ tr.innerHTML=`
 body.appendChild(tr);
 });
 
+if(mode==="region"){
+document.getElementById("companyName").innerText=region;
+document.getElementById("companyBC").innerText="Area Code: "+region;
+document.getElementById("companyPlant").innerText="";
+}else{
 document.getElementById("companyName").innerText=company;
+}
+
 document.getElementById("totalPJB").innerText=formatRupiah(totalPJB);
 document.getElementById("totalUsed").innerText=formatRupiah(totalUsed);
 document.getElementById("totalRemain").innerText=formatRupiah(totalRemain);
+
+if(pieChartInstance) pieChartInstance.destroy();
+pieChartInstance=new Chart(pieChart,{type:"pie",data:{labels:["Terpakai","Tersisa"],datasets:[{data:[totalUsed,totalRemain]}]},options:{responsive:true,maintainAspectRatio:false}});
+
+if(barChartInstance) barChartInstance.destroy();
+barChartInstance=new Chart(barChart,{type:"bar",data:{labels:["DONE","NOT YET"],datasets:[{data:[doneCount,notyetCount],backgroundColor:["green","red"]}]},options:{responsive:true,maintainAspectRatio:false}});
+
+if(timeChartInstance) timeChartInstance.destroy();
+timeChartInstance=new Chart(timeChart,{type:"pie",data:{labels:["ACTIVE","NEAR EXPIRED","EXPIRED"],datasets:[{data:[activeCount,nearCount,expiredCount],backgroundColor:["green","#e6a700","red"]}]},options:{responsive:true,maintainAspectRatio:false}});
 
 }catch(e){console.error(e);}
 isLoading=false;
 }
 
 loadDashboard();
+setInterval(loadDashboard,60000);
+document.addEventListener("visibilitychange",function(){if(!document.hidden) loadDashboard();});
+window.addEventListener("focus",loadDashboard);
+window.addEventListener("pageshow",loadDashboard);
+
 
 /* ===========================
-   INTERNAL EDIT SYSTEM
+   INTERNAL EDIT SYSTEM ADDITION
    =========================== */
 
-const WEB_APP_URL="https://script.google.com/macros/s/AKfycbzcqBas5fpCOI2vh6IHOG-j8y6DORSZWDH-tVIuq5e0hA6-qSY9F6PcD7idVm3X4nI/exec";
+const WEB_APP_URL="https://script.google.com/macros/s/AKfycbwge43MLowMLLJaGyM3PI5kc5HzOlqnukzOWPGEih2QwAjQfCtHzinXJdT5zohl3XIL/exec";
 let loggedUser=null;
 
 document.addEventListener("DOMContentLoaded",function(){
@@ -404,7 +425,7 @@ alert("Data tidak ditemukan");
 </script>
 
 <!-- LOGIN MODAL -->
-<div id="loginModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);justify-content:center;align-items:center;z-index:9999;pointer-events:auto;">
+<div id="loginModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);justify-content:center;align-items:center;z-index:9999;">
 <div style="background:white;padding:25px;border-radius:8px;width:300px;">
 <h3>Login Internal</h3>
 <input id="username" placeholder="Username" style="width:100%;padding:8px;margin-bottom:10px;">
@@ -414,7 +435,7 @@ alert("Data tidak ditemukan");
 </div>
 
 <!-- EDIT MODAL -->
-<div id="editModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);justify-content:center;align-items:center;z-index:9999;pointer-events:auto;">
+<div id="editModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);justify-content:center;align-items:center;z-index:9999;">
 <div style="background:white;padding:25px;border-radius:8px;width:350px;">
 <h3>Input Transaksi</h3>
 <input id="editPJB" placeholder="PJB" style="width:100%;padding:8px;margin-bottom:10px;">
