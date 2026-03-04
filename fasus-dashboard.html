@@ -429,7 +429,42 @@ alert("Data tidak ditemukan");
 }
 
 </script>
+/* ===========================
+LOGIN PATCH - ADD ONLY
+=========================== */
 
+const originalLogin = login;
+
+login = function(){
+
+console.log("Login triggered");
+
+try{
+originalLogin();
+}catch(e){
+console.log("Original login error",e);
+}
+
+setTimeout(function(){
+
+const username=document.getElementById("username").value;
+const password=document.getElementById("password").value;
+
+if(username==="GALIH" && password==="123"){
+loggedUser=username;
+document.getElementById("loginModal").style.display="none";
+document.getElementById("editModal").style.display="flex";
+}
+
+if(username==="WIN" && password==="123"){
+loggedUser=username;
+document.getElementById("loginModal").style.display="none";
+document.getElementById("editModal").style.display="flex";
+}
+
+},1200);
+
+}; 
 <!-- LOGIN MODAL -->
 <div id="loginModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);justify-content:center;align-items:center;z-index:9999;">
 <div style="background:white;padding:25px;border-radius:8px;width:300px;">
