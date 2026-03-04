@@ -296,7 +296,7 @@ tr.innerHTML=`
 <td>${model}</td>
 `;
 }
-  
+
 body.appendChild(tr);
 });
 
@@ -331,6 +331,120 @@ document.addEventListener("visibilitychange",function(){if(!document.hidden) loa
 window.addEventListener("focus",loadDashboard);
 window.addEventListener("pageshow",loadDashboard);
 
+
+/* ===========================
+   INTERNAL EDIT SYSTEM ADDITION
+   =========================== */
+
+const WEB_APP_URL="PASTE_WEB_APP_URL_KAMU_DISINI";
+let loggedUser=null;
+
+document.addEventListener("DOMContentLoaded",function(){
+const header=document.querySelector(".header");
+const btn=document.createElement("button");
+btn.innerText="Edit";
+btn.style.padding="8px 14px";
+btn.style.background="#ffc107";
+btn.style.border="none";
+btn.style.borderRadius="4px";
+btn.style.cursor="pointer";
+btn.style.fontWeight="bold";
+btn.onclick=openLogin;
+header.appendChild(btn);
+});
+
+function openLogin(){
+document.getElementById("loginModal").style.display="flex";
+}
+
+function login(){
+const username=document.getElementById("username").value;
+const password=document.getElementById("password").value;
+
+fetch(WEB_APP_URL,{
+method:"POST",
+body:JSON.stringify({
+action:"login",
+username:username,
+password:password
+})
+})
+.then(res=>res.json())
+.then(res=>{
+if(res.status==="success"){
+loggedUser=username;
+document.getElementById("loginModal").style.display="none";
+document.getElementById("editModal").style.display="flex";
+}else{
+alert("Login gagal");
+}
+});
+}
+
+function submitUpdate(){
+const pjb=document.getElementById("editPJB").value;
+const serial=document.getElementById("editSerial").value;
+const nominal=document.getElementById("editNominal").value;
+const nama=document.getElementById("editNama").value;
+
+fetch(WEB_APP_URL,{
+method:"POST",
+body:JSON.stringify({
+action:"update",
+username:loggedUser,
+pjb:pjb,
+serial:serial,
+nominal:nominal,
+namaTransaksi:nama
+})
+})
+.then(res=>res.json())
+.then(res=>{
+
+if(res.status==="success"){
+alert("Berhasil update");
+document.getElementById("editModal").style.display="none";
+loadDashboard();
+}
+
+if(res.status==="exceed"){
+alert("Nominal melebihi sisa budget");
+}
+
+if(res.status==="invalid"){
+alert("Nominal tidak valid");
+}
+
+if(res.status==="notfound"){
+alert("Data tidak ditemukan");
+}
+
+});
+}
+
 </script>
+
+<!-- LOGIN MODAL -->
+<div id="loginModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);justify-content:center;align-items:center;z-index:9999;">
+<div style="background:white;padding:25px;border-radius:8px;width:300px;">
+<h3>Login Internal</h3>
+<input id="username" placeholder="Username" style="width:100%;padding:8px;margin-bottom:10px;">
+<input id="password" type="password" placeholder="Password" style="width:100%;padding:8px;margin-bottom:10px;">
+<button onclick="login()" style="width:100%;padding:8px;background:#ffc107;border:none;font-weight:bold;">Login</button>
+</div>
+</div>
+
+<!-- EDIT MODAL -->
+<div id="editModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);justify-content:center;align-items:center;z-index:9999;">
+<div style="background:white;padding:25px;border-radius:8px;width:350px;">
+<h3>Input Transaksi</h3>
+<input id="editPJB" placeholder="PJB" style="width:100%;padding:8px;margin-bottom:10px;">
+<input id="editSerial" placeholder="Serial Number" style="width:100%;padding:8px;margin-bottom:10px;">
+<input id="editNominal" type="number" placeholder="Nominal" style="width:100%;padding:8px;margin-bottom:10px;">
+<input id="editNama" placeholder="Nama Transaksi" style="width:100%;padding:8px;margin-bottom:10px;">
+<button onclick="submitUpdate()" style="width:100%;padding:8px;background:#28a745;color:white;border:none;font-weight:bold;">Simpan</button>
+</div>
+</div>
+
 </body>
 </html>
