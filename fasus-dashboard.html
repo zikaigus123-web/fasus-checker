@@ -363,6 +363,9 @@ const password=document.getElementById("password").value;
 
 fetch(WEB_APP_URL,{
 method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
 body:JSON.stringify({
 action:"login",
 username:username,
@@ -389,6 +392,9 @@ const nama=document.getElementById("editNama").value;
 
 fetch(WEB_APP_URL,{
 method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
 body:JSON.stringify({
 action:"update",
 username:loggedUser,
